@@ -127,6 +127,23 @@ For full functionality including user authentication and data persistence:
 3. **Detailed Setup Guide**
    - See [FIREBASE_SETUP.md](FIREBASE_SETUP.md) for complete instructions
 
+## 🎨 Meme Templates (Imgflip API)
+
+The app automatically loads popular meme templates from the Imgflip API:
+
+✅ **No API Key Required** - Works out of the box!
+
+**Features:**
+- 💯+ Popular meme templates from Imgflip
+- 🔄 Auto-categorized templates (Popular, Classic, Gaming, Reaction, Trending)
+- 📱 High-quality images
+- 🚀 Real-time template loading
+- 🔒 No rate limits or authentication needed
+
+**Fallback System:**
+- If Imgflip API is unavailable, built-in templates are used
+- Seamless user experience regardless of connectivity
+
 ## 📱 Demo Mode
 
 Try the app instantly without any setup:
