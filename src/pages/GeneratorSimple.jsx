@@ -6,7 +6,7 @@ import { useMemes } from "../hooks/useMemes";
 import html2canvas from "html2canvas";
 import toast from "react-hot-toast";
 import { v4 as uuidv4 } from "uuid";
-import AIMemeEditor from "../components/AIMemeEditor"; 
+// import AIMemeEditor from "../components/AIMemeEditor"; 
 import firebaseAIService from "../services/firebaseAI";
 
 const GeneratorSimple = () => {
@@ -35,9 +35,9 @@ const GeneratorSimple = () => {
           <p>✅ toast: {toast ? '✅ Loaded' : '❌ Failed'}</p>
           <p>✅ uuid: {uuidv4 ? '✅ Loaded' : '❌ Failed'}</p>
           <p>✅ useState/useRef: ✅ Working</p>
-          <p>✅ AIMemeEditor: {AIMemeEditor ? '✅ Loaded' : '❌ Failed'}</p>
+          <p>🔧 AIMemeEditor: Disabled for testing</p>
           <p>✅ firebaseAI: {firebaseAIService ? '✅ Loaded' : '❌ Failed'}</p>
-          <p className="text-green-400 mt-4 font-bold">🎉 ALL IMPORTS WORKING - Generator should work now!</p>
+          <p className="text-yellow-400 mt-4">🔍 Testing firebaseAI service only...</p>
         </div>
       </div>
     </div>
