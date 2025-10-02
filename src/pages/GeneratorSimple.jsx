@@ -37,7 +37,7 @@ const GeneratorSimple = () => {
           <p>✅ useState/useRef: ✅ Working</p>
           <p>🔧 AIMemeEditor: Disabled for testing</p>
           <p>✅ firebaseAI: {firebaseAIService ? '✅ Loaded' : '❌ Failed'}</p>
-          <p className="text-yellow-400 mt-4">🔍 Testing firebaseAI service only...</p>
+          <p className="text-yellow-400 mt-4">� Fixed firebaseAI top-level await issue!</p>
         </div>
       </div>
     </div>

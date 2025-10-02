@@ -2,15 +2,21 @@
 import { getFirebaseApp } from "../config/firebase.js";
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
-// Try to import Firebase AI Logic SDK
+// Try to import Firebase AI Logic SDK - moved inside async function to avoid top-level await
 let getAI, getGenerativeModel, GoogleAIBackend;
-try {
-  const firebaseAI = await import('firebase/ai');
-  getAI = firebaseAI.getAI;
-  getGenerativeModel = firebaseAI.getGenerativeModel;
-  GoogleAIBackend = firebaseAI.GoogleAIBackend;
-} catch (error) {
-  // Firebase AI Logic SDK not available, using direct Google AI approach
+
+async function loadFirebaseAI() {
+  try {
+    const firebaseAI = await import('firebase/ai');
+    getAI = firebaseAI.getAI;
+    getGenerativeModel = firebaseAI.getGenerativeModel;
+    GoogleAIBackend = firebaseAI.GoogleAIBackend;
+    return true;
+  } catch (error) {
+    // Firebase AI Logic SDK not available, using direct Google AI approach
+    console.log('Firebase AI SDK not available, using Google AI directly');
+    return false;
+  }
 }
 
 class FirebaseAIService {
@@ -21,10 +27,12 @@ class FirebaseAIService {
     this.initializeGemini();
   }
 
-  initializeGemini() {
+  async initializeGemini() {
     try {
-      // First try Firebase AI Logic SDK
-      if (getAI && getGenerativeModel && GoogleAIBackend) {
+      // First try to load Firebase AI Logic SDK
+      const firebaseAILoaded = await loadFirebaseAI();
+      
+      if (firebaseAILoaded && getAI && getGenerativeModel && GoogleAIBackend) {
         try {
           const firebaseApp = getFirebaseApp();
           
@@ -48,6 +56,7 @@ class FirebaseAIService {
       
     } catch (error) {
       this.initializationError = `Failed to initialize AI service: ${error.message}`;
+      console.error('AI initialization error:', error);
     }
   }
 
