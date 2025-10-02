@@ -1,4 +1,3 @@
-import React from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { memeImages } from '../data/memeData'
@@ -8,8 +7,6 @@ import { useAuth } from '../context/AuthContext'
 const Landing = () => {
   const { isDarkMode } = useTheme()
   const { user } = useAuth()
-  
-  // Check if user is in demo mode
   const isDemoUser = user && localStorage.getItem('demoUser')
   const features = [
     {
@@ -62,7 +59,7 @@ const Landing = () => {
       </div>
 
       {/* Hero Section */}
-      <div className="relative z-10 container mx-auto px-6 py-20">
+      <div className="relative z-10 container mx-auto px-4 sm:px-6 py-16 sm:py-20">
         <motion.div 
           className="text-center max-w-4xl mx-auto"
           initial="hidden"
@@ -70,11 +67,11 @@ const Landing = () => {
           variants={containerVariants}
         >
           {/* Main Headline */}
-          <motion.div variants={itemVariants} className="mb-8">
-            <h1 className="text-6xl md:text-8xl font-extrabold gradient-text mb-4">
-              MEMEFY AI
+          <motion.div variants={itemVariants} className="mb-6 sm:mb-8">
+            <h1 className="text-4xl sm:text-6xl md:text-8xl font-extrabold gradient-text mb-4 leading-tight">
+              MEMEFY-AI
             </h1>
-            <div className="flex justify-center items-center gap-4 text-4xl md:text-6xl mb-6">
+            <div className="flex justify-center items-center gap-3 sm:gap-4 text-2xl sm:text-4xl md:text-6xl mb-4 sm:mb-6">
               <span className="animate-bounce">🔥</span>
               <span className="animate-pulse">💯</span>
               <span className="animate-bounce delay-300">⚡</span>
@@ -84,24 +81,25 @@ const Landing = () => {
           {/* Tagline */}
           <motion.p 
             variants={itemVariants}
-            className="text-xl md:text-2xl text-gray-300 mb-8 font-medium leading-relaxed"
+            className="text-lg sm:text-xl md:text-2xl text-gray-300 mb-6 sm:mb-8 font-medium leading-relaxed px-4"
           >
-            The ultimate AI meme generator for Gen-Z creators.<br />
+            The ultimate AI meme generator for Gen-Z creators.<br className="hidden sm:block" />
             <span className="gradient-text font-bold">No cap, just pure viral content! 🚀</span>
           </motion.p>
 
           {/* CTA Buttons */}
           <motion.div 
             variants={itemVariants}
-            className="flex flex-col sm:flex-row gap-6 justify-center items-center mb-16"
+            className="flex flex-col sm:flex-row gap-6 sm:gap-8 justify-center items-stretch sm:items-center mb-16 px-4 max-w-md sm:max-w-none mx-auto"
           >
             <motion.div
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
+              className="w-full sm:w-auto"
             >
               <Link 
                 to="/generator"
-                className="bg-gradient-to-r from-pink-500 to-cyan-500 px-8 py-4 rounded-full text-lg font-bold text-white shadow-lg hover:shadow-pink-500/25 transition-all duration-300 animate-pulse-glow"
+                className="block bg-gradient-to-r from-pink-500 to-cyan-500 px-8 py-4 rounded-full text-lg font-bold text-white shadow-lg hover:shadow-pink-500/25 transition-all duration-300 animate-pulse-glow text-center"
               >
                 Start Creating Memes ✨
               </Link>
@@ -112,10 +110,11 @@ const Landing = () => {
               <motion.div
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
+                className="w-full sm:w-auto"
               >
                 <Link 
                   to="/login"
-                  className="border-2 border-cyan-500 px-8 py-4 rounded-full text-lg font-bold text-cyan-400 hover:bg-cyan-500/10 transition-all duration-300"
+                  className="block border-2 border-cyan-500 px-8 py-4 rounded-full text-lg font-bold text-cyan-400 hover:bg-cyan-500/10 transition-all duration-300 text-center"
                 >
                   Try Demo Mode 🎮
                 </Link>
@@ -256,4 +255,4 @@ const Landing = () => {
   )
 }
 
-export default Landing
+export default Landing;

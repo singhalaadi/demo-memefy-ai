@@ -1,52 +1,98 @@
-import React from 'react'
 import { motion } from 'framer-motion'
 import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
 import { useAnalytics } from '../hooks/useAnalytics'
+import { useMemes } from '../hooks/useMemes'
 
 const Dashboard = () => {
   const { user } = useAuth()
   const { isDarkMode } = useTheme()
   const { analytics, loading } = useAnalytics(user?.id)
+  const { memes } = useMemes()
   const isDemoUser = user && localStorage.getItem('demoUser')
+  
+  // Calculate actual user memes count and stats
+  const userMemes = memes.filter(meme => {
+    // In demo mode, count all demo memes for this user
+    if (isDemoUser) {
+      return meme.user_id === user?.id || meme.id?.startsWith('demo-');
+    }
+    return meme.user_id === user?.id;
+  });
+  const userMemesCount = userMemes.length
+  const totalViews = userMemes.reduce((sum, meme) => sum + (meme.views || 0), 0)
+  const totalShares = userMemes.reduce((sum, meme) => sum + (meme.shares || 0), 0)
 
   const stats = [
     {
       icon: '🎨',
       title: 'Memes Created',
-      value: analytics?.totalMemes || 0,
+      value: userMemesCount,
       color: 'from-pink-500 to-red-500',
       description: 'Total memes in your collection'
     },
     {
       icon: '👁️',
       title: 'Total Views',
-      value: (analytics?.totalViews || 0).toLocaleString(),
+      value: totalViews.toLocaleString(),
       color: 'from-cyan-500 to-blue-500',
       description: 'People who viewed your memes'
     },
     {
       icon: '📤',
       title: 'Shares',
-      value: analytics?.totalShares || 0,
+      value: totalShares,
       color: 'from-green-500 to-emerald-500',
       description: 'Times your memes were shared'
     },
     {
       icon: '🔥',
       title: 'Trending Score',
-      value: Math.floor(Math.random() * 100) + 1, // Mock trending score
+      value: Math.min(Math.floor((totalViews + totalShares * 5) / Math.max(userMemesCount, 1)), 100),
       color: 'from-orange-500 to-yellow-500',
       description: 'Your viral potential rating'
     }
   ]
 
-  const recentActivity = [
-    { action: 'Created new meme', meme: 'Distracted Boyfriend', time: '2 hours ago', icon: '🎨' },
-    { action: 'Meme went viral', meme: 'Drake Pointing', time: '1 day ago', icon: '🔥' },
-    { action: 'Shared to gallery', meme: 'Woman Yelling at Cat', time: '2 days ago', icon: '📤' },
-    { action: 'Received 100 views', meme: 'This is Fine', time: '3 days ago', icon: '👁️' }
-  ]
+  // Generate recent activity from actual user memes
+  const getRecentActivity = () => {
+    if (userMemes.length === 0) {
+      return [
+        { action: 'Welcome to MEMEFY AI!', meme: 'Start creating memes', time: 'Just now', icon: '�' },
+        { action: 'Explore templates', meme: 'Generator ready', time: 'Now', icon: '🤖' },
+      ];
+    }
+
+    const sortedMemes = userMemes
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+      .slice(0, 4);
+
+    return sortedMemes.map(meme => {
+      const createdDate = new Date(meme.createdAt);
+      const now = new Date();
+      const diffMs = now - createdDate;
+      const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+      const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+      
+      let timeAgo;
+      if (diffDays > 0) {
+        timeAgo = `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+      } else if (diffHours > 0) {
+        timeAgo = `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+      } else {
+        timeAgo = 'Just now';
+      }
+
+      return {
+        action: 'Created new meme',
+        meme: meme.template_name || 'Custom Meme',
+        time: timeAgo,
+        icon: '🎨'
+      };
+    });
+  };
+
+  const recentActivity = getRecentActivity();
 
   const quickActions = [
     { title: 'Create New Meme', icon: '🎨', href: '/generator', color: 'from-pink-500 to-purple-500' },
@@ -246,4 +292,4 @@ const Dashboard = () => {
   )
 }
 
-export default Dashboard
+export default Dashboard;

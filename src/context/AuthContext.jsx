@@ -33,7 +33,7 @@ export const AuthProvider = ({ children }) => {
         setLoading(false);
         return;
       } catch (error) {
-        console.error("Error parsing demo user:", error);
+
         localStorage.removeItem("demoUser");
       }
     }
@@ -53,6 +53,9 @@ export const AuthProvider = ({ children }) => {
 
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
       if (firebaseUser) {
+        console.log("Firebase user object:", firebaseUser);
+        console.log("Photo URL:", firebaseUser.photoURL);
+        
         const user = {
           id: firebaseUser.uid,
           name: firebaseUser.displayName || "Meme Master",
@@ -61,6 +64,7 @@ export const AuthProvider = ({ children }) => {
           isPremium: false, 
           createdAt: firebaseUser.metadata.creationTime,
         };
+        console.log("Processed user object:", user);
         setUser(user);
 
         localStorage.removeItem("demoUser");
@@ -107,7 +111,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   const signOut = async () => {
-    // Handle demo user logout
+
     const demoUser = localStorage.getItem("demoUser");
     if (demoUser) {
       localStorage.removeItem("demoUser");
