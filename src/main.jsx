@@ -7,6 +7,9 @@ import { AuthProvider } from "./context/AuthContext";
 import ErrorBoundary from "./components/ErrorBoundary";
 import Layout from "./components/layout/Layout";
 import ConfigurationStatus from "./components/ConfigurationStatus";
+import Landing from "./pages/Landing";
+import Login from "./pages/Login";
+import Gallery from "./pages/Gallery";
 import "./index.css";
 
 // Debug function to test components step by step
@@ -21,6 +24,11 @@ function DebugApp() {
           <AuthProvider>
             <Router>
               <Layout>
+                <Routes>
+                  <Route path="/" element={<Landing />} />
+                  <Route path="/login" element={<Login />} />
+                  <Route path="/gallery" element={<Gallery />} />
+                  <Route path="*" element={
                 <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 flex items-center justify-center">
                   <div className="text-center text-white">
                     <h1 className="text-6xl font-bold mb-6 bg-gradient-to-r from-pink-400 to-cyan-400 bg-clip-text text-transparent">
@@ -36,10 +44,13 @@ function DebugApp() {
                       <p className="text-green-400 font-semibold">✅ Router Works</p>
                       <p className="text-green-400 font-semibold">✅ Layout Works</p>
                       <p className="text-green-400 font-semibold">✅ ConfigurationStatus Works</p>
-                      <p className="text-yellow-400 font-semibold">🔧 Testing Pages Next...</p>
+                      <p className="text-green-400 font-semibold">✅ Basic Pages Work (Landing, Login, Gallery)</p>
+                      <p className="text-yellow-400 font-semibold">🔧 Testing Protected Pages Next...</p>
                     </div>
                   </div>
                 </div>
+                  } />
+                </Routes>
               </Layout>
             </Router>
           </AuthProvider>
