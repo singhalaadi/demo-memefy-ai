@@ -1,36 +1,41 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import './index.css'
 
-// Minimal test component
-function MinimalApp() {
+// Simple test pages
+function Landing() {
   return (
-    <div style={{ 
-      minHeight: '100vh', 
-      backgroundColor: '#1a1a2e', 
-      color: 'white', 
-      display: 'flex', 
-      alignItems: 'center', 
-      justifyContent: 'center',
-      flexDirection: 'column',
-      fontFamily: 'Arial, sans-serif'
-    }}>
-      <h1 style={{ fontSize: '3rem', marginBottom: '1rem' }}>🎨 MEME FACTORY</h1>
-      <p style={{ fontSize: '1.2rem', opacity: 0.8 }}>App is working! Loading main features...</p>
-      <div style={{ 
-        marginTop: '2rem', 
-        padding: '1rem 2rem', 
-        backgroundColor: '#16213e', 
-        borderRadius: '8px' 
-      }}>
-        React App Successfully Deployed ✅
+    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 flex items-center justify-center">
+      <div className="text-center text-white">
+        <h1 className="text-6xl font-bold mb-6 bg-gradient-to-r from-pink-400 to-cyan-400 bg-clip-text text-transparent">
+          MEMEFY AI 🎨
+        </h1>
+        <p className="text-xl mb-8 opacity-90">
+          Create viral memes with AI power!
+        </p>
+        <div className="bg-white/10 backdrop-blur-lg rounded-xl p-6 border border-white/20">
+          <p className="text-green-400 font-semibold">✅ App Successfully Restored</p>
+          <p className="text-sm mt-2 opacity-75">Testing basic routing...</p>
+        </div>
       </div>
     </div>
   )
 }
 
+function TestApp() {
+  return (
+    <Router>
+      <Routes>
+        <Route path="/" element={<Landing />} />
+        <Route path="*" element={<Landing />} />
+      </Routes>
+    </Router>
+  )
+}
+
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <MinimalApp />
+    <TestApp />
   </React.StrictMode>,
 )
