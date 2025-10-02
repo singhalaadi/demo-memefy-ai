@@ -8,6 +8,7 @@ export default defineConfig({
     exclude: ['lucide-react'],
   },
   build: {
+    target: 'es2022', // Support top-level await
     outDir: 'dist',
     assetsDir: 'assets',
     rollupOptions: {
@@ -15,6 +16,9 @@ export default defineConfig({
         manualChunks: undefined,
       },
     },
+  },
+  esbuild: {
+    target: 'es2022', // Ensure esbuild also targets es2022
   },
   base: './',
 });
