@@ -25,16 +25,22 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const demoUser = localStorage.getItem("demoUser");
-    if (demoUser) {
+    if (typeof window !== 'undefined') {
       try {
-        const parsedDemoUser = JSON.parse(demoUser);
-        setUser(parsedDemoUser);
-        setLoading(false);
-        return;
+        const demoUser = localStorage.getItem("demoUser");
+        if (demoUser) {
+          try {
+            const parsedDemoUser = JSON.parse(demoUser);
+            setUser(parsedDemoUser);
+            setLoading(false);
+            return;
+          } catch (error) {
+            console.error('Error parsing demo user:', error);
+            localStorage.removeItem("demoUser");
+          }
+        }
       } catch (error) {
-
-        localStorage.removeItem("demoUser");
+        console.error('Error accessing localStorage:', error);
       }
     }
 
