@@ -11,7 +11,7 @@ import Landing from "./pages/Landing";
 import Login from "./pages/Login";
 import Gallery from "./pages/Gallery";
 import ProtectedRoute from "./components/ProtectedRoute";
-import Generator from "./pages/Generator";
+import GeneratorTest from "./pages/GeneratorTest";
 import "./index.css";
 
 // Debug function to test components step by step
@@ -30,7 +30,7 @@ function DebugApp() {
                   <Route path="/" element={<Landing />} />
                   <Route path="/login" element={<Login />} />
                   <Route path="/gallery" element={<Gallery />} />
-                  <Route path="/generator" element={<ProtectedRoute><Generator /></ProtectedRoute>} />
+                  <Route path="/generator" element={<ProtectedRoute><GeneratorTest /></ProtectedRoute>} />
                   <Route path="*" element={
                 <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 flex items-center justify-center">
                   <div className="text-center text-white">
