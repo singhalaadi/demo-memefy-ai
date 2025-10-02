@@ -10,6 +10,7 @@ import ConfigurationStatus from "./components/ConfigurationStatus";
 import Landing from "./pages/Landing";
 import Login from "./pages/Login";
 import Gallery from "./pages/Gallery";
+import ProtectedRoute from "./components/ProtectedRoute";
 import "./index.css";
 
 // Debug function to test components step by step
@@ -28,6 +29,13 @@ function DebugApp() {
                   <Route path="/" element={<Landing />} />
                   <Route path="/login" element={<Login />} />
                   <Route path="/gallery" element={<Gallery />} />
+                  <Route path="/test-protected" element={
+                    <ProtectedRoute>
+                      <div className="min-h-screen bg-green-900 flex items-center justify-center text-white">
+                        <h1 className="text-4xl">✅ ProtectedRoute Works!</h1>
+                      </div>
+                    </ProtectedRoute>
+                  } />
                   <Route path="*" element={
                 <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 flex items-center justify-center">
                   <div className="text-center text-white">
@@ -45,7 +53,8 @@ function DebugApp() {
                       <p className="text-green-400 font-semibold">✅ Layout Works</p>
                       <p className="text-green-400 font-semibold">✅ ConfigurationStatus Works</p>
                       <p className="text-green-400 font-semibold">✅ Basic Pages Work (Landing, Login, Gallery)</p>
-                      <p className="text-yellow-400 font-semibold">🔧 Testing Protected Pages Next...</p>
+                      <p className="text-yellow-400 font-semibold">🔧 Testing ProtectedRoute...</p>
+                      <p className="text-gray-400 text-sm">Visit /test-protected to test auth</p>
                     </div>
                   </div>
                 </div>
