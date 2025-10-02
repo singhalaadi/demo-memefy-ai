@@ -2,7 +2,7 @@
 import { getFirebaseApp } from "../config/firebase.js";
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
-// Try to import Firebase AI Logic SDK - moved inside async function to avoid top-level await
+// Try to import Firebase AI Logic SDK 
 let getAI, getGenerativeModel, GoogleAIBackend;
 
 async function loadFirebaseAI() {
