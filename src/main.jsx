@@ -3,6 +3,7 @@ import ReactDOM from "react-dom/client";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 import { ThemeProvider } from "./context/ThemeContext";
+import { AuthProvider } from "./context/AuthContext";
 import ErrorBoundary from "./components/ErrorBoundary";
 import "./index.css";
 
@@ -14,7 +15,8 @@ function DebugApp() {
     return (
       <ErrorBoundary>
         <ThemeProvider>
-          <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 flex items-center justify-center">
+          <AuthProvider>
+            <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 flex items-center justify-center">
             <div className="text-center text-white">
               <h1 className="text-6xl font-bold mb-6 bg-gradient-to-r from-pink-400 to-cyan-400 bg-clip-text text-transparent">
                 MEMEFY AI 🎨
@@ -25,10 +27,12 @@ function DebugApp() {
               <div className="bg-white/10 backdrop-blur-lg rounded-xl p-6 border border-white/20">
                 <p className="text-green-400 font-semibold">✅ ErrorBoundary Works</p>
                 <p className="text-green-400 font-semibold">✅ ThemeProvider Works</p>
-                <p className="text-yellow-400 font-semibold">🔧 Testing AuthProvider Next...</p>
+                <p className="text-green-400 font-semibold">✅ AuthProvider Works</p>
+                <p className="text-yellow-400 font-semibold">🔧 Testing Router Next...</p>
               </div>
             </div>
           </div>
+          </AuthProvider>
         </ThemeProvider>
       </ErrorBoundary>
     );
