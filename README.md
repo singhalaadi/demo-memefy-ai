@@ -7,7 +7,7 @@
 
 Modern meme generator with AI assistance, Google auth, and real-time collaboration.
 
-![MEMEFY-AI REVIEW](https://memefy-ai.netlify.app/)
+[MEMEFY-AI PREVIEW: Click Here](https://memefy-ai.netlify.app/)
 
 ## ✨ Features
 
