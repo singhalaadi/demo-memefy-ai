@@ -1,30 +1,36 @@
-import { StrictMode } from 'react';
-import { createRoot } from 'react-dom/client';
-import App from './App.jsx';
-import './index.css';
+import React from 'react'
+import ReactDOM from 'react-dom/client'
+import './index.css'
 
-// Add error handling for the root render
-try {
-  const rootElement = document.getElementById('root');
-  if (!rootElement) {
-    throw new Error('Root element not found');
-  }
-
-  createRoot(rootElement).render(
-    <StrictMode>
-      <App />
-    </StrictMode>
-  );
-} catch (error) {
-  console.error('Failed to render app:', error);
-  // Fallback render
-  document.body.innerHTML = `
-    <div style="display: flex; justify-content: center; align-items: center; min-height: 100vh; background: #0a0a0f; color: white; font-family: sans-serif;">
-      <div style="text-align: center;">
-        <h1>MEMEFY-AI</h1>
-        <p>Loading error: ${error.message}</p>
-        <p>Please refresh the page</p>
+// Minimal test component
+function MinimalApp() {
+  return (
+    <div style={{ 
+      minHeight: '100vh', 
+      backgroundColor: '#1a1a2e', 
+      color: 'white', 
+      display: 'flex', 
+      alignItems: 'center', 
+      justifyContent: 'center',
+      flexDirection: 'column',
+      fontFamily: 'Arial, sans-serif'
+    }}>
+      <h1 style={{ fontSize: '3rem', marginBottom: '1rem' }}>🎨 MEME FACTORY</h1>
+      <p style={{ fontSize: '1.2rem', opacity: 0.8 }}>App is working! Loading main features...</p>
+      <div style={{ 
+        marginTop: '2rem', 
+        padding: '1rem 2rem', 
+        backgroundColor: '#16213e', 
+        borderRadius: '8px' 
+      }}>
+        React App Successfully Deployed ✅
       </div>
     </div>
-  `;
+  )
 }
+
+ReactDOM.createRoot(document.getElementById('root')).render(
+  <React.StrictMode>
+    <MinimalApp />
+  </React.StrictMode>,
+)
