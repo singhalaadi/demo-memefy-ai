@@ -11,41 +11,29 @@ const Navbar = () => {
   const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-
   const isDemoUser = user && localStorage.getItem("demoUser");
 
   const handleLogout = async () => {
-    await signOut();
-    navigate("/");
-    setIsMenuOpen(false);
+    // In permanent demo mode, logout is disabled
+    return;
   };
 
-  const navLinks = [
-    { label: "Home", path: "/", icon: "🏠" },
-    { label: "Generator", path: "/generator", icon: "🤖" },
-    { label: "Gallery", path: "/gallery", icon: "🎨" },
-    ...(user
-      ? [
-          { label: "Dashboard", path: "/dashboard", icon: "📊" },
-          { label: "Profile", path: "/profile", icon: "👤" },
-        ]
-      : []),
-  ];
+  const handleLogoutClick = (e) => {
+    e.preventDefault();
+    // Show tooltip or toast message about disabled logout
+    return false;
+  };
 
-  // Separate main navigation links (Home, Generator, Gallery)
+  // Main navigation links for desktop and mobile
   const mainNavLinks = [
     { label: "Home", path: "/", icon: "🏠" },
+    { label: "Dashboard", path: "/dashboard", icon: "📊" },
     { label: "Generator", path: "/generator", icon: "🤖" },
     { label: "Gallery", path: "/gallery", icon: "🎨" },
   ];
 
   // User-specific links for mobile menu
-  const userNavLinks = user
-    ? [
-        { label: "Dashboard", path: "/dashboard", icon: "📊" },
-        { label: "Profile", path: "/profile", icon: "👤" },
-      ]
-    : [];
+  const userNavLinks = [{ label: "Profile", path: "/profile", icon: "👤" }];
 
   return (
     <nav className="sticky top-0 z-50 glass border-b border-white/10">
@@ -53,7 +41,10 @@ const Navbar = () => {
         <div className="flex items-center h-16">
           {/* Left Side: Logo - Far Left Edge */}
           <div className="flex items-center">
-            <Link to="/" className="flex items-center gap-3 group flex-shrink-0">
+            <Link
+              to="/"
+              className="flex items-center gap-3 group flex-shrink-0"
+            >
               <motion.div
                 whileHover={{ rotate: 360 }}
                 transition={{ duration: 0.5 }}
@@ -61,7 +52,9 @@ const Navbar = () => {
               >
                 🚀
               </motion.div>
-              <span className="text-xl lg:text-xl font-bold gradient-text whitespace-nowrap">MEMEFY-AI</span>
+              <span className="text-xl lg:text-xl font-bold gradient-text whitespace-nowrap">
+                MEMEFY-AI
+              </span>
             </Link>
           </div>
 
@@ -90,7 +83,9 @@ const Navbar = () => {
                   }`}
                 >
                   <span className="text-base xl:text-lg">{link.icon}</span>
-                  <span className="hidden lg:inline whitespace-nowrap">{link.label}</span>
+                  <span className="hidden lg:inline whitespace-nowrap">
+                    {link.label}
+                  </span>
                 </Link>
               ))}
 
@@ -113,7 +108,9 @@ const Navbar = () => {
                   }`}
                 >
                   <span className="text-base xl:text-lg">{link.icon}</span>
-                  <span className="hidden lg:inline whitespace-nowrap">{link.label}</span>
+                  <span className="hidden lg:inline whitespace-nowrap">
+                    {link.label}
+                  </span>
                 </Link>
               ))}
             </div>
@@ -126,33 +123,26 @@ const Navbar = () => {
               className="hidden md:flex p-2 xl:p-3 glass-dark rounded-full hover:bg-white/10 transition-all duration-300"
               title={`Switch to ${isDarkMode ? "light" : "dark"} mode`}
             >
-              <span className="text-base xl:text-lg">{isDarkMode ? "🌙" : "☀️"}</span>
+              <span className="text-base xl:text-lg">
+                {isDarkMode ? "🌙" : "☀️"}
+              </span>
             </motion.button>
 
-            {/* Auth Section */}
-            {user ? (
-              <div className="hidden md:flex items-center gap-1 xl:gap-2 flex-shrink-0">
-                {isDemoUser && (
-                  <span className="hidden lg:inline px-2 py-1 bg-yellow-500/20 text-yellow-400 text-xs font-semibold rounded-full whitespace-nowrap">
-                    DEMO
-                  </span>
-                )}
-                <button
-                  onClick={handleLogout}
-                  className="px-2 xl:px-4 py-1 xl:py-1.5 bg-red-500/20 text-red-400 hover:bg-red-500/30 rounded-full font-medium xl:font-semibold transition-all duration-300 flex items-center gap-1 xl:gap-2 text-sm xl:text-base"
-                >
-                  <span className="hidden xl:inline">Logout</span>
-                  <span className="text-base xl:text-lg">👋</span>
-                </button>
-              </div>
-            ) : (
-              <Link
-                to="/login"
-                className="hidden md:flex bg-gradient-to-r from-pink-500 to-cyan-500 px-4 xl:px-6 py-2 xl:py-3 rounded-full font-semibold text-white hover:from-cyan-500 hover:to-pink-500 transition-all duration-300 items-center gap-2 text-sm xl:text-base"
+            {/* Auth Section - Always shown since user is always logged in (demo mode) */}
+            <div className="hidden md:flex items-center gap-1 xl:gap-2 flex-shrink-0">
+              <span className="hidden lg:inline px-2 py-1 bg-yellow-500/20 text-yellow-400 text-xs font-semibold rounded-full whitespace-nowrap">
+                DEMO
+              </span>
+              <button
+                onClick={handleLogoutClick}
+                disabled
+                className="px-2 xl:px-4 py-1 xl:py-1.5 bg-gray-500/20 text-gray-400 cursor-not-allowed rounded-full font-medium xl:font-semibold transition-all duration-300 flex items-center gap-1 xl:gap-2 text-sm xl:text-base opacity-50 hover:opacity-70"
+                title="Logout disabled in demo mode"
               >
-                <span>Login</span>
-              </Link>
-            )}
+                <span className="hidden xl:inline">Logout</span>
+                <span className="text-base xl:text-lg">🚫</span>
+              </button>
+            </div>
 
             {/* Mobile Menu Button */}
             <button
@@ -250,51 +240,27 @@ const Navbar = () => {
               <span>{isDarkMode ? "Dark Mode" : "Light Mode"}</span>
             </button>
 
-            {user ? (
-              <div className="border-t border-white/10 pt-4 mt-4">
-                <div className="flex items-center gap-3 px-4 py-3">
-                  {user.photoURL || user.avatar ? (
-                    <img
-                      src={user.photoURL || user.avatar}
-                      alt="Profile"
-                      className="w-8 h-8 rounded-full object-cover"
-                      onError={(e) => {
-                        e.target.style.display = 'none';
-                        e.target.nextSibling.style.display = 'inline';
-                      }}
-                    />
-                  ) : null}
-                  <span className="text-2xl" style={{display: user.photoURL || user.avatar ? 'none' : 'inline'}}>
-                    👤
+            {/* User profile section - Always shown since user is always logged in (demo mode) */}
+            <div className="border-t border-white/10 pt-4 mt-4">
+              <div className="flex items-center gap-3 px-4 py-3">
+                <span className="text-2xl">🤖</span>
+                <div>
+                  <p className="font-medium">Meme Master</p>
+                  <span className="text-xs bg-yellow-500/20 text-yellow-400 px-2 py-1 rounded-full">
+                    Demo Mode
                   </span>
-                  <div>
-                    <p className="font-medium">{user.name || user.displayName || "User"}</p>
-                    {isDemoUser && (
-                      <span className="text-xs bg-yellow-500/20 text-yellow-400 px-2 py-1 rounded-full">
-                        Demo Mode
-                      </span>
-                    )}
-                  </div>
                 </div>
-                <button
-                  onClick={handleLogout}
-                  className="w-full flex items-center gap-3 px-4 py-3 text-red-400 hover:bg-red-500/20 rounded-xl font-medium transition-all duration-300"
-                >
-                  <span className="text-xl">👋</span>
-                  <span>Logout</span>
-                </button>
               </div>
-            ) : (
-              <div className="border-t border-white/10 pt-4 mt-4">
-                <Link
-                  to="/login"
-                  onClick={() => setIsMenuOpen(false)}
-                  className="w-full bg-gradient-to-r from-pink-500 to-cyan-500 px-4 py-3 rounded-xl font-semibold text-white flex items-center justify-center gap-2"
-                >
-                  <span>Login</span>
-                </Link>
-              </div>
-            )}
+              <button
+                onClick={handleLogoutClick}
+                disabled
+                className="w-full flex items-center gap-3 px-4 py-3 text-gray-400 cursor-not-allowed rounded-xl font-medium transition-all duration-300 opacity-50 hover:opacity-70"
+                title="Logout disabled in demo mode"
+              >
+                <span className="text-xl">🚫</span>
+                <span>Logout (Disabled)</span>
+              </button>
+            </div>
           </div>
         </motion.div>
       </div>

@@ -25,25 +25,49 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Auto-login with demo user - no login required
+    const initializeDemoUser = () => {
+      const demoUser = {
+        id: "demo-user-123",
+        name: "Meme Master",
+        email: "demo@memefy.ai",
+        avatar: "🤖",
+        isPremium: false,
+        createdAt: new Date().toISOString(),
+      };
+      
+      setUser(demoUser);
+      setLoading(false);
+      return;
+    };
+
     if (typeof window !== 'undefined') {
       try {
-        const demoUser = localStorage.getItem("demoUser");
-        if (demoUser) {
+        const existingDemoUser = localStorage.getItem("demoUser");
+        if (existingDemoUser) {
           try {
-            const parsedDemoUser = JSON.parse(demoUser);
+            const parsedDemoUser = JSON.parse(existingDemoUser);
             setUser(parsedDemoUser);
             setLoading(false);
             return;
           } catch (error) {
-            console.error('Error parsing demo user:', error);
+            console.error('Error parsing existing demo user:', error);
             localStorage.removeItem("demoUser");
           }
         }
+        // If no existing demo user, create one
+        initializeDemoUser();
       } catch (error) {
         console.error('Error accessing localStorage:', error);
+        // Fallback to creating demo user even if localStorage fails
+        initializeDemoUser();
       }
+    } else {
+      // Server-side or no window, still initialize demo user
+      initializeDemoUser();
     }
 
+    // Optional: Still allow Firebase auth if someone manually tries to sign in
     const checkRedirectResult = async () => {
       try {
         const result = await getRedirectResult(auth);
@@ -55,6 +79,7 @@ export const AuthProvider = ({ children }) => {
       }
     };
 
+    // Only check Firebase auth if not in permanent demo mode
     checkRedirectResult();
 
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
@@ -72,15 +97,8 @@ export const AuthProvider = ({ children }) => {
         };
         console.log("Processed user object:", user);
         setUser(user);
-
-        localStorage.removeItem("demoUser");
-      } else {
-        const demoUser = localStorage.getItem("demoUser");
-        if (!demoUser) {
-          setUser(null);
-        }
       }
-      setLoading(false);
+      // Note: We don't set loading to false here anymore since we handle it in initializeDemoUser
     });
 
     return () => unsubscribe();
@@ -145,9 +163,13 @@ export const AuthProvider = ({ children }) => {
       createdAt: new Date().toISOString(),
     };
 
-    localStorage.setItem("demoUser", JSON.stringify(demoUser));
+    try {
+      localStorage.setItem("demoUser", JSON.stringify(demoUser));
+    } catch (error) {
+      console.error('Error saving demo user to localStorage:', error);
+    }
     setUser(demoUser);
-    toast.success("Welcome to Demo Mode! 🎮");
+    toast.success("Welcome to Memefy! 🎮");
   };
 
   const value = {

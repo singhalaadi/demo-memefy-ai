@@ -114,21 +114,19 @@ const Landing = () => {
               </Link>
             </motion.div>
 
-            {/* Only show Try Demo Mode button if user is NOT authenticated at all */}
-            {!user && (
-              <motion.div
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="w-full sm:w-auto"
+            {/* Go to Dashboard button */}
+            <motion.div
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="w-full sm:w-auto"
+            >
+              <Link
+                to="/dashboard"
+                className="block border-2 border-cyan-500 px-8 py-4 rounded-full text-lg font-bold text-cyan-400 hover:bg-cyan-500/10 transition-all duration-300 text-center"
               >
-                <Link
-                  to="/login"
-                  className="block border-2 border-cyan-500 px-8 py-4 rounded-full text-lg font-bold text-cyan-400 hover:bg-cyan-500/10 transition-all duration-300 text-center"
-                >
-                  Try Demo Mode 🎮
-                </Link>
-              </motion.div>
-            )}
+                Go to Dashboard 🚀
+              </Link>
+            </motion.div>
           </motion.div>
 
           {/* Quick Demo Link */}

@@ -6,9 +6,7 @@ import { ThemeProvider } from './context/ThemeContext'
 import ErrorBoundary from './components/ErrorBoundary'
 import ConfigurationStatus from './components/ConfigurationStatus'
 import Layout from './components/layout/Layout'
-import ProtectedRoute from './components/ProtectedRoute'
 import Landing from './pages/Landing'
-import Login from './pages/Login'
 import Generator from './pages/Generator'
 import Gallery from './pages/Gallery'
 import Dashboard from './pages/Dashboard'
@@ -24,32 +22,11 @@ function App() {
             <Layout>
               <Routes>
                 <Route path="/" element={<Landing />} />
-                <Route path="/login" element={<Login />} />
+                <Route path="/login" element={<Dashboard />} />
                 <Route path="/gallery" element={<Gallery />} />
-                <Route 
-                  path="/generator" 
-                  element={
-                    <ProtectedRoute>
-                      <Generator />
-                    </ProtectedRoute>
-                  } 
-                />
-                <Route 
-                  path="/dashboard" 
-                  element={
-                    <ProtectedRoute>
-                      <Dashboard />
-                    </ProtectedRoute>
-                  } 
-                />
-                <Route 
-                  path="/profile" 
-                  element={
-                    <ProtectedRoute>
-                      <Profile />
-                    </ProtectedRoute>
-                  } 
-                />
+                <Route path="/generator" element={<Generator />} />
+                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/profile" element={<Profile />} />
               </Routes>
             </Layout>
           </Router>
