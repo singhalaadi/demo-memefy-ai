@@ -49,9 +49,9 @@ const Navbar = () => {
 
   return (
     <nav className="sticky top-0 z-50 glass border-b border-white/10">
-      <div className="container mx-auto px-2">
-        <div className="flex items-center justify-between h-16">
-          {/* Left Side: Logo */}
+      <div className="container mx-auto px-8 py-2">
+        <div className="flex items-center h-16">
+          {/* Left Side: Logo - Far Left Edge */}
           <div className="flex items-center">
             <Link to="/" className="flex items-center gap-3 group flex-shrink-0">
               <motion.div
@@ -61,20 +61,23 @@ const Navbar = () => {
               >
                 🚀
               </motion.div>
-              <span className="text-base lg:text-lg font-bold gradient-text whitespace-nowrap">MEMEFY-AI</span>
+              <span className="text-xl lg:text-xl font-bold gradient-text whitespace-nowrap">MEMEFY-AI</span>
             </Link>
           </div>
 
-          {/* Right Side: Desktop Navigation + Theme + Auth */}
-          <div className="flex items-center gap-2">
+          {/* Auto Gap - Spacer */}
+          <div className="flex-1"></div>
+
+          {/* Right Side: All Navigation Icons */}
+          <div className="flex items-center gap-4">
             {/* Desktop Main Navigation */}
-            <div className="hidden md:flex items-center gap-2 lg:gap-3">
+            <div className="hidden md:flex items-center gap-4 xl:gap-2">
               {mainNavLinks.map((link) => (
                 <Link
                   key={link.path}
                   to={link.path}
                   title={link.label}
-                  className={`flex items-center gap-2 px-3 lg:px-4 py-2.5 rounded-full font-semibold transition-all duration-300 hover:bg-white/10 ${
+                  className={`flex items-center gap-1 xl:gap-2 px-2 xl:px-3 py-2 xl:py-2.5 rounded-full font-medium xl:font-semibold transition-all duration-300 hover:bg-white/10 text-sm xl:text-base ${
                     location.pathname === link.path
                       ? `bg-gradient-to-r from-pink-500/20 to-cyan-500/20 ${
                           isDarkMode ? "text-white" : "text-gray-900"
@@ -86,8 +89,8 @@ const Navbar = () => {
                         }`
                   }`}
                 >
-                  <span className="text-lg">{link.icon}</span>
-                  <span className="hidden lg:inline text-base whitespace-nowrap">{link.label}</span>
+                  <span className="text-base xl:text-lg">{link.icon}</span>
+                  <span className="hidden lg:inline whitespace-nowrap">{link.label}</span>
                 </Link>
               ))}
 
@@ -97,7 +100,7 @@ const Navbar = () => {
                   key={link.path}
                   to={link.path}
                   title={link.label}
-                  className={`flex items-center gap-2 px-3 lg:px-4 py-2.5 rounded-full font-semibold transition-all duration-300 hover:bg-white/10 ${
+                  className={`flex items-center gap-1 xl:gap-2 px-2 xl:px-3 py-2 xl:py-2.5 rounded-full font-medium xl:font-semibold transition-all duration-300 hover:bg-white/10 text-sm xl:text-base ${
                     location.pathname === link.path
                       ? `bg-gradient-to-r from-pink-500/20 to-cyan-500/20 ${
                           isDarkMode ? "text-white" : "text-gray-900"
@@ -109,8 +112,8 @@ const Navbar = () => {
                         }`
                   }`}
                 >
-                  <span className="text-lg">{link.icon}</span>
-                  <span className="hidden lg:inline text-base whitespace-nowrap">{link.label}</span>
+                  <span className="text-base xl:text-lg">{link.icon}</span>
+                  <span className="hidden lg:inline whitespace-nowrap">{link.label}</span>
                 </Link>
               ))}
             </div>
@@ -120,32 +123,32 @@ const Navbar = () => {
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
               onClick={toggleTheme}
-              className="hidden md:flex p-3 glass-dark rounded-full hover:bg-white/10 transition-all duration-300"
+              className="hidden md:flex p-2 xl:p-3 glass-dark rounded-full hover:bg-white/10 transition-all duration-300"
               title={`Switch to ${isDarkMode ? "light" : "dark"} mode`}
             >
-              <span className="text-lg">{isDarkMode ? "🌙" : "☀️"}</span>
+              <span className="text-base xl:text-lg">{isDarkMode ? "🌙" : "☀️"}</span>
             </motion.button>
 
             {/* Auth Section */}
             {user ? (
-              <div className="hidden md:flex items-center gap-2 flex-shrink-0">
+              <div className="hidden md:flex items-center gap-1 xl:gap-2 flex-shrink-0">
                 {isDemoUser && (
-                  <span className="px-2 py-1 bg-yellow-500/20 text-yellow-400 text-xs font-semibold rounded-full whitespace-nowrap">
+                  <span className="hidden lg:inline px-2 py-1 bg-yellow-500/20 text-yellow-400 text-xs font-semibold rounded-full whitespace-nowrap">
                     DEMO
                   </span>
                 )}
                 <button
                   onClick={handleLogout}
-                  className="px-4 py-2.5 bg-red-500/20 text-red-400 hover:bg-red-500/30 rounded-full font-semibold transition-all duration-300 flex items-center gap-2"
+                  className="px-2 xl:px-4 py-1 xl:py-1.5 bg-red-500/20 text-red-400 hover:bg-red-500/30 rounded-full font-medium xl:font-semibold transition-all duration-300 flex items-center gap-1 xl:gap-2 text-sm xl:text-base"
                 >
-                  <span className="hidden lg:inline text-base">Logout</span>
-                  <span className="text-lg">👋</span>
+                  <span className="hidden xl:inline">Logout</span>
+                  <span className="text-base xl:text-lg">👋</span>
                 </button>
               </div>
             ) : (
               <Link
                 to="/login"
-                className="hidden md:flex bg-gradient-to-r from-pink-500 to-cyan-500 px-6 py-3 rounded-full font-semibold text-white hover:from-cyan-500 hover:to-pink-500 transition-all duration-300 items-center gap-2 text-base"
+                className="hidden md:flex bg-gradient-to-r from-pink-500 to-cyan-500 px-4 xl:px-6 py-2 xl:py-3 rounded-full font-semibold text-white hover:from-cyan-500 hover:to-pink-500 transition-all duration-300 items-center gap-2 text-sm xl:text-base"
               >
                 <span>Login</span>
               </Link>
