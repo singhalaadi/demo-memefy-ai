@@ -13,8 +13,6 @@ async function loadFirebaseAI() {
     GoogleAIBackend = firebaseAI.GoogleAIBackend;
     return true;
   } catch (error) {
-    // Firebase AI Logic SDK not available, using direct Google AI approach
-    console.log('Firebase AI SDK not available, using Google AI directly');
     return false;
   }
 }
@@ -46,7 +44,6 @@ class FirebaseAIService {
           this.textModel = getGenerativeModel(this.ai, { model: "gemini-2.5-flash" });
           return;
         } catch (firebaseError) {
-          console.warn('Firebase AI Logic initialization failed:', firebaseError.message);
         }
       }
       
@@ -56,7 +53,6 @@ class FirebaseAIService {
       
     } catch (error) {
       this.initializationError = `Failed to initialize AI service: ${error.message}`;
-      console.error('AI initialization error:', error);
     }
   }
 
@@ -577,7 +573,6 @@ JSON format:
       };
       
     } catch (error) {
-      console.error('All AI connection methods failed:', error);
       const fallbackMessage = `🤖 AI connection failed: ${error.message}. Smart fallbacks are working! ✨`;
       return {
         success: false,

@@ -212,12 +212,6 @@ export const useMemes = (currentUser = null) => {
         return null;
       }
       
-      console.log('Creating meme with user:', {
-        currentUserId: currentUser.id,
-        currentUserUid: currentUser.uid,
-        currentUserEmail: currentUser.email
-      });
-      
       // Clean the meme data to prevent Firestore issues
       const cleanMemeData = {
         template_id: processedMemeData.template_id || null,
@@ -299,12 +293,6 @@ export const useMemes = (currentUser = null) => {
     );
     
     if (!currentUser || !userMatches) {
-      console.log('User check failed:', {
-        currentUser: currentUser?.id || currentUser?.uid,
-        currentUserEmail: currentUser?.email,
-        memeUserId: memeToDelete.user_id,
-        memeUserEmail: memeToDelete.user_email
-      });
       toast.error('You can only delete your own memes');
       return;
     }

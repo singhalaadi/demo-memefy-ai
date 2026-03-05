@@ -8,6 +8,7 @@ import toast from "react-hot-toast";
 import { v4 as uuidv4 } from "uuid";
 import AIMemeEditor from "../components/AIMemeEditor";
 import firebaseAIService from "../services/firebaseAI";
+import memeAPI from "../services/memeAPI";
 
 const Generator = () => {
   const { user } = useAuth();
@@ -41,6 +42,9 @@ const Generator = () => {
   const [isGeneratingAI, setIsGeneratingAI] = useState(false);
   const [aiConcept, setAiConcept] = useState("");
   const [isGeneratingFromConcept, setIsGeneratingFromConcept] = useState(false);
+  const [backendAIConcept, setBackendAIConcept] = useState("");
+  const [isGeneratingBackendAI, setIsGeneratingBackendAI] = useState(false);
+  const [useOwnTemplateForAI, setUseOwnTemplateForAI] = useState(false);
 
   const categories = [
     "All",
@@ -109,7 +113,7 @@ const Generator = () => {
   const totalTemplatesCount = allFilteredTemplates.length || 0;
   const remainingTemplatesCount = Math.max(
     0,
-    totalTemplatesCount - totalToShow
+    totalTemplatesCount - totalToShow,
   );
   const canLoadMore = remainingTemplatesCount > 0;
 
@@ -126,7 +130,7 @@ const Generator = () => {
           placeholder: `Text ${index + 1}${
             index === 0 ? " (Top)" : index === boxCount - 1 ? " (Bottom)" : ""
           }`,
-        })
+        }),
       );
       setTextFields(initialTextFields);
 
@@ -134,14 +138,13 @@ const Generator = () => {
       if (boxCount >= 1) setTopText("");
       if (boxCount >= 2) setBottomText("");
     } catch (error) {
-      console.error("Error selecting template:", error);
       toast.error("Failed to select template");
     }
   };
 
   const updateTextField = (id, text) => {
     setTextFields((prev) =>
-      prev.map((field) => (field.id === id ? { ...field, text } : field))
+      prev.map((field) => (field.id === id ? { ...field, text } : field)),
     );
 
     if (id === 0) setTopText(text);
@@ -155,7 +158,7 @@ const Generator = () => {
     setTimeout(() => {
       const newTemplateIndex = (currentPage - 1) * templatesPerPage;
       const templateElements = document.querySelectorAll(
-        "[data-template-index]"
+        "[data-template-index]",
       );
       if (templateElements[newTemplateIndex]) {
         templateElements[newTemplateIndex].scrollIntoView({
@@ -189,7 +192,7 @@ const Generator = () => {
 
       const result = await firebaseAIService.generateCompleteMeme(
         selectedTemplate.name,
-        aiConcept
+        aiConcept,
       );
 
       if (result && result.topText) setTopText(result.topText);
@@ -203,7 +206,6 @@ const Generator = () => {
         }, 1000);
       }
     } catch (error) {
-      console.error("AI generation error:", error);
       toast.error("AI failed, but you can still create manually! 😅");
     } finally {
       setIsGeneratingFromConcept(false);
@@ -217,10 +219,94 @@ const Generator = () => {
       const result = await firebaseAIService.testConnection();
       toast.success(`Firebase AI Connected! ${result}`);
     } catch (error) {
-      console.error("Firebase AI test error:", error);
       toast.error(`Firebase AI test failed: ${error?.message || error}`);
     } finally {
       setIsGeneratingAI(false);
+    }
+  };
+
+  // -------------------- BACKEND AI INTEGRATION --------------------
+
+  /**
+   * Generate meme using your trained backend AI model
+   * This uses the FastAPI backend with Gemini AI and sentiment analysis
+   */
+  const generateBackendAIMeme = async () => {
+    if (!backendAIConcept.trim()) {
+      toast.error("Please enter a meme idea! 💭");
+      return;
+    }
+
+    // Check if user wants to use their own template but hasn't selected one
+    if (useOwnTemplateForAI && !selectedTemplate) {
+      toast.error(
+        "Please select a template first, or uncheck 'Use My Selected Template'! 🎨",
+      );
+      return;
+    }
+
+    setIsGeneratingBackendAI(true);
+
+    try {
+      // Check backend health first
+      const isBackendHealthy = await memeAPI.checkBackendHealth();
+      if (!isBackendHealthy) {
+        toast.error("Backend server is not running! Please start it first. 🚨");
+        return;
+      }
+
+      toast.loading("🤖 Your AI model is analyzing...", { id: "backend-ai" });
+
+      // Call your trained backend AI model
+      // If user selected a template, pass its ID; otherwise let backend choose
+      const templateId =
+        useOwnTemplateForAI && selectedTemplate ? selectedTemplate.id : null;
+      const result = await memeAPI.generateAIMeme(
+        backendAIConcept,
+        null,
+        templateId,
+      );
+
+      if (result.success) {
+        toast.success(
+          `✨ AI Meme Generated!\n📊 Sentiment: ${result.sentiment}\n🎯 Toxicity: ${(result.toxicityScore * 100).toFixed(1)}%`,
+          { id: "backend-ai", duration: 4000 },
+        );
+
+        // Create meme object with backend response
+        const memeData = {
+          id: uuidv4(),
+          caption: result.caption,
+          sentiment: result.sentiment,
+          toxicity_score: result.toxicityScore,
+          template: result.template,
+          template_trending: result.templateTrending,
+          template_usage: result.templateRecentUsage,
+          image_url: result.memeUrl,
+          createdAt: new Date().toISOString(),
+          user_id: user?.id,
+          views: 0,
+          shares: 0,
+        };
+
+        setGeneratedMeme(memeData);
+        setShowPreview(true);
+        setBackendAIConcept(""); // Clear input
+
+        // Show trending notification if applicable
+        if (result.templateTrending) {
+          setTimeout(() => {
+            toast("🔥 This template is trending!", { icon: "📈" });
+          }, 1000);
+        }
+      }
+    } catch (error) {
+      toast.error(
+        `Backend AI failed: ${error.message}. Make sure your backend is running!`,
+        { id: "backend-ai", duration: 5000 },
+      );
+    } finally {
+      setIsGeneratingBackendAI(false);
     }
   };
 
@@ -240,7 +326,7 @@ const Generator = () => {
     try {
       const suggestions = await firebaseAIService.analyzeMemeTemplate(
         selectedTemplate.image,
-        selectedTemplate.name
+        selectedTemplate.name,
       );
 
       // Apply first suggestion
@@ -250,7 +336,6 @@ const Generator = () => {
         toast.success("AI suggestion applied! 🤖✨");
       }
     } catch (error) {
-      console.error("AI suggestion error:", error);
       toast.error("Failed to generate AI suggestion");
     } finally {
       setIsGeneratingAI(false);
@@ -285,7 +370,6 @@ const Generator = () => {
       setShowPreview(true);
       toast.success("AI-powered meme created! 🎨🤖");
     } catch (error) {
-      console.error("AI editor save error:", error);
       toast.error("Failed to save AI meme");
     }
   };
@@ -350,7 +434,6 @@ const Generator = () => {
       setShowPreview(true);
       toast.success("Meme is ready to break the internet! 🔥");
     } catch (error) {
-      console.error("Generate meme error:", error);
       toast.error("Oops! Meme machine broke 😭");
     } finally {
       setIsGenerating(false);
@@ -358,9 +441,28 @@ const Generator = () => {
   };
 
   const handleDownloadMeme = async () => {
-    if (!memeRef.current) return;
+    if (!generatedMeme) return;
 
     try {
+      // For backend AI generated memes, download directly from URL
+      if (generatedMeme.image_url) {
+        const response = await fetch(generatedMeme.image_url);
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+
+        const link = document.createElement("a");
+        link.download = `ai-meme-${Date.now()}.jpg`;
+        link.href = url;
+        link.click();
+
+        window.URL.revokeObjectURL(url);
+        toast.success("AI Meme downloaded! Time to go viral! 🚀");
+        return;
+      }
+
+      // For manually created memes, use html2canvas
+      if (!memeRef.current) return;
+
       const canvas = await html2canvas(memeRef.current, {
         backgroundColor: "transparent",
         scale: 3,
@@ -374,7 +476,6 @@ const Generator = () => {
 
       toast.success("Meme downloaded! Time to go viral! 🚀");
     } catch (error) {
-      console.error("Download error:", error);
       toast.error("Download failed! Try again bestie 💔");
     }
   };
@@ -394,7 +495,6 @@ const Generator = () => {
       setSelectedTemplate(null);
       toast.success("Added to your gallery! ✨");
     } catch (error) {
-      console.error("Save meme error:", error);
       toast.error("Save failed! Our servers are crying 😢");
     }
   };
@@ -402,10 +502,10 @@ const Generator = () => {
   // Robust text style generator: receives a position {x,y} and returns style object
   const getTextStyle = (position = { x: 50, y: 50 }, options = {}) => {
     const effect = textEffects.find(
-      (e) => e.id === (options.textEffect || textEffect)
+      (e) => e.id === (options.textEffect || textEffect),
     );
     const selectedFont = fontFamilies.find(
-      (f) => f.id === (options.fontFamily || fontFamily)
+      (f) => f.id === (options.fontFamily || fontFamily),
     );
 
     return {
@@ -507,8 +607,8 @@ const Generator = () => {
                 activeTab === tab
                   ? "bg-gradient-to-r from-pink-500 to-cyan-500 text-white shadow-lg scale-105"
                   : isDarkMode
-                  ? "glass text-gray-300 hover:text-white hover:shadow-md"
-                  : "bg-white/80 text-gray-700 hover:text-gray-900 hover:bg-white shadow-sm hover:shadow-md border border-gray-200"
+                    ? "glass text-gray-300 hover:text-white hover:shadow-md"
+                    : "bg-white/80 text-gray-700 hover:text-gray-900 hover:bg-white shadow-sm hover:shadow-md border border-gray-200"
               }`}
             >
               <span className="truncate">
@@ -550,8 +650,8 @@ const Generator = () => {
                         selectedCategory === category
                           ? "bg-gradient-to-r from-yellow-400 to-orange-500 text-white shadow-lg scale-105"
                           : isDarkMode
-                          ? "glass-dark text-gray-300 hover:text-white hover:shadow-md"
-                          : "bg-white/80 text-gray-600 hover:text-gray-900 hover:bg-white shadow-sm hover:shadow-md border border-gray-200"
+                            ? "glass-dark text-gray-300 hover:text-white hover:shadow-md"
+                            : "bg-white/80 text-gray-600 hover:text-gray-900 hover:bg-white shadow-sm hover:shadow-md border border-gray-200"
                       }`}
                     >
                       {category}{" "}
@@ -615,8 +715,8 @@ const Generator = () => {
                           selectedTemplate?.id === template?.id
                             ? "ring-2 ring-pink-500 shadow-lg shadow-pink-500/25 scale-105"
                             : isDarkMode
-                            ? "glass hover:shadow-lg hover:shadow-white/10"
-                            : "bg-white/90 hover:bg-white shadow-md hover:shadow-lg hover:shadow-gray-200/50 border border-gray-100"
+                              ? "glass hover:shadow-lg hover:shadow-white/10"
+                              : "bg-white/90 hover:bg-white shadow-md hover:shadow-lg hover:shadow-gray-200/50 border border-gray-100"
                         }`}
                       >
                         <div className="aspect-square relative group">
@@ -660,7 +760,7 @@ const Generator = () => {
                           width: `${Math.min(
                             100,
                             (filteredTemplates.length / totalTemplatesCount) *
-                              100
+                              100,
                           )}%`,
                         }}
                       />
@@ -916,14 +1016,14 @@ const Generator = () => {
                             onClick={async () => {
                               if (!aiConcept.trim()) {
                                 toast.error(
-                                  "Please describe your concept first! 💭"
+                                  "Please describe your concept first! 💭",
                                 );
                                 return;
                               }
                               try {
                                 const suggestion =
                                   await firebaseAIService.generateMemeTemplate(
-                                    aiConcept
+                                    aiConcept,
                                   );
                                 toast.success(
                                   `AI suggests: ${
@@ -931,15 +1031,11 @@ const Generator = () => {
                                   }! ${suggestion?.reason || ""}`,
                                   {
                                     duration: 5000,
-                                  }
+                                  },
                                 );
                               } catch (error) {
-                                console.error(
-                                  "Template suggestion error:",
-                                  error
-                                );
                                 toast.error(
-                                  "Failed to get template suggestion 😅"
+                                  "Failed to get template suggestion 😅",
                                 );
                               }
                             }}
@@ -976,7 +1072,7 @@ const Generator = () => {
                             onClick={async () => {
                               if (!aiConcept.trim()) {
                                 toast.error(
-                                  "Please describe your meme concept first! 💭"
+                                  "Please describe your meme concept first! 💭",
                                 );
                                 return;
                               }
@@ -990,29 +1086,25 @@ const Generator = () => {
 
                                 if (testResult?.success) {
                                   toast.success(
-                                    "AI Image generation is available! 🖼️✨"
+                                    "AI Image generation is available! 🖼️✨",
                                   );
                                   toast(
                                     "Feature coming soon - generating custom meme images! 🚀",
                                     {
                                       duration: 4000,
                                       icon: "🎭",
-                                    }
+                                    },
                                   );
                                 } else {
                                   toast.error(
                                     `Image generation unavailable: ${
                                       testResult?.error || "Unknown"
-                                    }`
+                                    }`,
                                   );
                                 }
                               } catch (error) {
-                                console.error(
-                                  "Image generation test error:",
-                                  error
-                                );
                                 toast.error(
-                                  "Image generation test failed 🖼️❌"
+                                  "Image generation test failed 🖼️❌",
                                 );
                               }
                             }}
@@ -1020,6 +1112,134 @@ const Generator = () => {
                           >
                             🎨 Test AI Image (Coming Soon)
                           </motion.button>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Backend AI Generator - YOUR TRAINED MODEL! */}
+                    <div
+                      className={`glass p-3 rounded-lg transition-all duration-300 mb-3 border-2 ${
+                        isDarkMode
+                          ? "border-yellow-500/50 bg-gradient-to-br from-yellow-900/20 to-orange-900/20"
+                          : "bg-gradient-to-br from-yellow-50 to-orange-50 shadow-lg border-yellow-300"
+                      }`}
+                    >
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-2 py-0.5 rounded-full text-xs font-bold">
+                          NEW
+                        </div>
+                        <h3 className="text-base font-bold gradient-text transition-all duration-300">
+                          🚀 Your Trained AI Model
+                        </h3>
+                      </div>
+                      <p className="text-xs text-gray-400 mb-3">
+                        ✨ Uses your custom-trained sentiment analysis + Gemini
+                        AI
+                      </p>
+
+                      {/* Template Selection Toggle */}
+                      <div
+                        className={`mb-3 p-2 rounded-lg border ${
+                          isDarkMode
+                            ? "bg-gray-800/50 border-gray-700"
+                            : "bg-white/70 border-gray-200"
+                        }`}
+                      >
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={useOwnTemplateForAI}
+                            onChange={(e) =>
+                              setUseOwnTemplateForAI(e.target.checked)
+                            }
+                            className="w-4 h-4 rounded text-yellow-500 focus:ring-2 focus:ring-yellow-500"
+                          />
+                          <div className="flex-1">
+                            <span className="text-sm font-semibold">
+                              🎨 Use My Selected Template
+                            </span>
+                            <p className="text-xs text-gray-500">
+                              {useOwnTemplateForAI
+                                ? selectedTemplate
+                                  ? `✓ Using: ${selectedTemplate.name}`
+                                  : "⚠️ Please select a template above first!"
+                                : "AI will auto-pick the best template"}
+                            </p>
+                          </div>
+                        </label>
+                      </div>
+
+                      <div className="space-y-2">
+                        <div>
+                          <label className="block text-xs font-semibold mb-1">
+                            💡 Enter your meme idea
+                          </label>
+                          <textarea
+                            value={backendAIConcept}
+                            onChange={(e) =>
+                              setBackendAIConcept(e.target.value)
+                            }
+                            placeholder="e.g., When the deadline is tomorrow but you're still watching Netflix..."
+                            className={`w-full p-2 rounded-md border-2 transition-all duration-300 h-16 resize-none text-sm ${
+                              isDarkMode
+                                ? "bg-gray-800 border-yellow-500/30 text-white focus:border-yellow-500"
+                                : "bg-white border-yellow-300 text-gray-900 focus:border-yellow-500"
+                            }`}
+                            onKeyDown={(e) => {
+                              if (
+                                e.key === "Enter" &&
+                                (e.ctrlKey || e.metaKey)
+                              ) {
+                                generateBackendAIMeme();
+                              }
+                            }}
+                          />
+                          <p className="text-xs text-gray-500 mt-1">
+                            💡 Pro tip: Press Ctrl/Cmd + Enter to generate
+                          </p>
+                        </div>
+                        <motion.button
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                          onClick={generateBackendAIMeme}
+                          disabled={
+                            isGeneratingBackendAI || !backendAIConcept.trim()
+                          }
+                          className={`w-full py-3 px-4 rounded-xl font-bold text-sm shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-all duration-300 ${
+                            isDarkMode
+                              ? "bg-gradient-to-r from-yellow-500 via-orange-500 to-red-500 hover:from-yellow-600 hover:via-orange-600 hover:to-red-600 text-white"
+                              : "bg-gradient-to-r from-yellow-400 via-orange-400 to-red-400 hover:from-yellow-500 hover:via-orange-500 hover:to-red-500 text-white"
+                          }`}
+                        >
+                          {isGeneratingBackendAI ? (
+                            <>
+                              <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" />
+                              <span>AI Model Working...</span>
+                            </>
+                          ) : (
+                            <>
+                              <span>🎯</span>
+                              <span>Generate with Your AI Model</span>
+                            </>
+                          )}
+                        </motion.button>
+                        <div
+                          className={`text-xs p-2 rounded-md ${
+                            isDarkMode ? "bg-gray-800/50" : "bg-white/70"
+                          }`}
+                        >
+                          <p className="font-semibold mb-1">📊 What happens:</p>
+                          <ul className="space-y-0.5 text-gray-400">
+                            <li>✓ Gemini AI generates caption</li>
+                            <li>✓ Sentiment analysis (safe/risky)</li>
+                            <li>
+                              ✓{" "}
+                              {useOwnTemplateForAI
+                                ? "Uses your selected template"
+                                : "Auto template selection"}
+                            </li>
+                            <li>✓ Trend tracking & toxicity score</li>
+                          </ul>
                         </div>
                       </div>
                     </div>
@@ -1314,7 +1534,7 @@ const Generator = () => {
                             const middleBase = 20;
                             const step = Math.min(
                               60 / Math.max(1, textFields.length),
-                              20
+                              20,
                             );
                             pos = { x: 50, y: middleBase + index * step };
                           }
@@ -1404,8 +1624,8 @@ const Generator = () => {
                         textEffect === effect.id
                           ? "bg-gradient-to-r from-pink-500 to-cyan-500 text-white shadow-lg scale-105"
                           : isDarkMode
-                          ? "glass-dark text-gray-300 hover:text-white hover:shadow-md"
-                          : "bg-white/80 text-gray-600 hover:text-gray-900 hover:bg-white shadow-sm hover:shadow-md border border-gray-200"
+                            ? "glass-dark text-gray-300 hover:text-white hover:shadow-md"
+                            : "bg-white/80 text-gray-600 hover:text-gray-900 hover:bg-white shadow-sm hover:shadow-md border border-gray-200"
                       }`}
                       style={{
                         textShadow: effect.style,
@@ -1506,94 +1726,148 @@ const Generator = () => {
                 ref={memeRef}
                 className="relative bg-white rounded-xl overflow-hidden mb-6 max-w-lg mx-auto"
               >
-                <img
-                  src={generatedMeme.template_image}
-                  alt={generatedMeme.template_name}
-                  className="w-full h-auto"
-                />
-                
-                {/* Text overlay container */}
-                <div className="absolute inset-0">
-                  {generatedMeme.text_fields?.map((field, index) => {
-                    if (!field?.text) return null;
-
-                    const isTop = index === 0;
-                    const isBottom =
-                      index === generatedMeme.text_fields.length - 1 &&
-                      generatedMeme.text_fields.length > 1;
-                    const isMiddle = !isTop && !isBottom;
-
-                    let pos = { x: 50, y: 50 };
-                    if (isTop)
-                      pos = generatedMeme.text_positions?.top || textPosition;
-                    else if (isBottom)
-                      pos =
-                        generatedMeme.text_positions?.bottom ||
-                        bottomTextPosition;
-                    else if (isMiddle) {
-                      const middlePosition = 20 + index * 30;
-                      pos = { x: 50, y: middlePosition };
-                    }
-
-                    return (
-                      <div
-                        key={field.id}
-                        className="meme-text-overlay"
-                        style={getTextStyle(pos, {
-                          textColor: generatedMeme.text_color,
-                          fontSize: generatedMeme.font_size,
-                          fontFamily: generatedMeme.font_family,
-                          textAlign: generatedMeme.text_align,
-                          textEffect: generatedMeme.text_effect,
-                        })}
-                      >
-                        {field.text.toUpperCase()}
+                {/* Backend AI generated meme - show final image directly */}
+                {generatedMeme.image_url ? (
+                  <div className="w-full">
+                    <img
+                      src={generatedMeme.image_url}
+                      alt={generatedMeme.caption || "AI Generated Meme"}
+                      className="w-full h-auto"
+                      crossOrigin="anonymous"
+                    />
+                    {/* Show caption and metadata below */}
+                    <div
+                      className={`p-3 ${isDarkMode ? "bg-gray-800" : "bg-gray-100"}`}
+                    >
+                      <p className="font-semibold text-sm mb-1">
+                        {generatedMeme.caption}
+                      </p>
+                      <div className="flex gap-2 text-xs">
+                        <span
+                          className={`px-2 py-0.5 rounded ${
+                            generatedMeme.sentiment?.includes("Safe") ||
+                            generatedMeme.sentiment?.includes("Positive")
+                              ? "bg-green-500/20 text-green-400"
+                              : generatedMeme.sentiment?.includes("Neutral")
+                                ? "bg-yellow-500/20 text-yellow-400"
+                                : "bg-red-500/20 text-red-400"
+                          }`}
+                        >
+                          {generatedMeme.sentiment}
+                        </span>
+                        {generatedMeme.toxicity_score !== undefined && (
+                          <span className="px-2 py-0.5 rounded bg-blue-500/20 text-blue-400">
+                            Toxicity:{" "}
+                            {(generatedMeme.toxicity_score * 100).toFixed(1)}%
+                          </span>
+                        )}
+                        {generatedMeme.template_trending && (
+                          <span className="px-2 py-0.5 rounded bg-orange-500/20 text-orange-400">
+                            🔥 Trending
+                          </span>
+                        )}
                       </div>
-                    );
-                  })}
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <img
+                      src={generatedMeme.template_image}
+                      alt={generatedMeme.template_name}
+                      className="w-full h-auto"
+                    />
 
-                  {/* Fallback for backward compatibility */}
-                  {(!generatedMeme.text_fields ||
-                    generatedMeme.text_fields.length === 0) &&
-                    generatedMeme.top_text && (
-                      <div
-                        className="meme-text-overlay"
-                        style={{
-                          top: "15%",
-                          left: "50%",
-                          color: generatedMeme.text_color,
-                          fontSize: generatedMeme.font_size,
-                          fontFamily: fontFamilies.find(f => f.id === generatedMeme.font_family)?.font || "Impact, Arial Black, sans-serif",
-                          textAlign: generatedMeme.text_align,
-                          textShadow: textEffects.find(
-                            (e) => e.id === generatedMeme.text_effect
-                          )?.style,
-                        }}
-                      >
-                        {generatedMeme.top_text.toUpperCase()}
-                      </div>
-                    )}
-                  {(!generatedMeme.text_fields ||
-                    generatedMeme.text_fields.length === 0) &&
-                    generatedMeme.bottom_text && (
-                      <div
-                        className="meme-text-overlay"
-                        style={{
-                          top: "85%",
-                          left: "50%",
-                          color: generatedMeme.text_color,
-                          fontSize: generatedMeme.font_size,
-                          fontFamily: fontFamilies.find(f => f.id === generatedMeme.font_family)?.font || "Impact, Arial Black, sans-serif",
-                          textAlign: generatedMeme.text_align,
-                          textShadow: textEffects.find(
-                            (e) => e.id === generatedMeme.text_effect
-                          )?.style,
-                        }}
-                      >
-                        {generatedMeme.bottom_text.toUpperCase()}
-                      </div>
-                    )}
-                </div>
+                    {/* Text overlay container - for manual generation */}
+                    <div className="absolute inset-0">
+                      {generatedMeme.text_fields?.map((field, index) => {
+                        if (!field?.text) return null;
+
+                        const isTop = index === 0;
+                        const isBottom =
+                          index === generatedMeme.text_fields.length - 1 &&
+                          generatedMeme.text_fields.length > 1;
+                        const isMiddle = !isTop && !isBottom;
+
+                        let pos = { x: 50, y: 50 };
+                        if (isTop)
+                          pos =
+                            generatedMeme.text_positions?.top || textPosition;
+                        else if (isBottom)
+                          pos =
+                            generatedMeme.text_positions?.bottom ||
+                            bottomTextPosition;
+                        else if (isMiddle) {
+                          const middlePosition = 20 + index * 30;
+                          pos = { x: 50, y: middlePosition };
+                        }
+
+                        return (
+                          <div
+                            key={field.id}
+                            className="meme-text-overlay"
+                            style={getTextStyle(pos, {
+                              textColor: generatedMeme.text_color,
+                              fontSize: generatedMeme.font_size,
+                              fontFamily: generatedMeme.font_family,
+                              textAlign: generatedMeme.text_align,
+                              textEffect: generatedMeme.text_effect,
+                            })}
+                          >
+                            {field.text.toUpperCase()}
+                          </div>
+                        );
+                      })}
+
+                      {/* Fallback for backward compatibility */}
+                      {(!generatedMeme.text_fields ||
+                        generatedMeme.text_fields.length === 0) &&
+                        generatedMeme.top_text && (
+                          <div
+                            className="meme-text-overlay"
+                            style={{
+                              top: "15%",
+                              left: "50%",
+                              color: generatedMeme.text_color,
+                              fontSize: generatedMeme.font_size,
+                              fontFamily:
+                                fontFamilies.find(
+                                  (f) => f.id === generatedMeme.font_family,
+                                )?.font || "Impact, Arial Black, sans-serif",
+                              textAlign: generatedMeme.text_align,
+                              textShadow: textEffects.find(
+                                (e) => e.id === generatedMeme.text_effect,
+                              )?.style,
+                            }}
+                          >
+                            {generatedMeme.top_text.toUpperCase()}
+                          </div>
+                        )}
+                      {(!generatedMeme.text_fields ||
+                        generatedMeme.text_fields.length === 0) &&
+                        generatedMeme.bottom_text && (
+                          <div
+                            className="meme-text-overlay"
+                            style={{
+                              top: "85%",
+                              left: "50%",
+                              color: generatedMeme.text_color,
+                              fontSize: generatedMeme.font_size,
+                              fontFamily:
+                                fontFamilies.find(
+                                  (f) => f.id === generatedMeme.font_family,
+                                )?.font || "Impact, Arial Black, sans-serif",
+                              textAlign: generatedMeme.text_align,
+                              textShadow: textEffects.find(
+                                (e) => e.id === generatedMeme.text_effect,
+                              )?.style,
+                            }}
+                          >
+                            {generatedMeme.bottom_text.toUpperCase()}
+                          </div>
+                        )}
+                    </div>
+                  </>
+                )}
               </div>
 
               <div className="flex flex-wrap gap-3 justify-center">

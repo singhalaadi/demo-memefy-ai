@@ -51,15 +51,12 @@ export const AuthProvider = ({ children }) => {
             setLoading(false);
             return;
           } catch (error) {
-            console.error('Error parsing existing demo user:', error);
             localStorage.removeItem("demoUser");
           }
         }
         // If no existing demo user, create one
         initializeDemoUser();
       } catch (error) {
-        console.error('Error accessing localStorage:', error);
-        // Fallback to creating demo user even if localStorage fails
         initializeDemoUser();
       }
     } else {
@@ -75,7 +72,6 @@ export const AuthProvider = ({ children }) => {
           toast.success(`Welcome ${result.user.displayName}! 🎉`);
         }
       } catch (error) {
-        console.error("Redirect result error:", error);
       }
     };
 
@@ -84,9 +80,6 @@ export const AuthProvider = ({ children }) => {
 
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
       if (firebaseUser) {
-        console.log("Firebase user object:", firebaseUser);
-        console.log("Photo URL:", firebaseUser.photoURL);
-        
         const user = {
           id: firebaseUser.uid,
           name: firebaseUser.displayName || "Meme Master",
@@ -95,7 +88,6 @@ export const AuthProvider = ({ children }) => {
           isPremium: false, 
           createdAt: firebaseUser.metadata.creationTime,
         };
-        console.log("Processed user object:", user);
         setUser(user);
       }
       // Note: We don't set loading to false here anymore since we handle it in initializeDemoUser
@@ -129,7 +121,6 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       if (error.code !== "auth/popup-closed-by-user") {
         toast.error("Authentication failed. Please try again.");
-        console.error("Auth error:", error);
       }
     }
   };
@@ -149,7 +140,6 @@ export const AuthProvider = ({ children }) => {
       toast.success("Logged out successfully");
     } catch (error) {
       toast.error("Error logging out");
-      console.error("Sign out error:", error);
     }
   };
 
@@ -166,7 +156,6 @@ export const AuthProvider = ({ children }) => {
     try {
       localStorage.setItem("demoUser", JSON.stringify(demoUser));
     } catch (error) {
-      console.error('Error saving demo user to localStorage:', error);
     }
     setUser(demoUser);
     toast.success("Welcome to Memefy! 🎮");

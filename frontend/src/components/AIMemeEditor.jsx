@@ -144,7 +144,6 @@ const AIMemEditor = ({ template, onClose, onSave }) => {
       const result = await firebaseAIService.generateMemeFromConcept(
         conceptInput
       );
-      console.log("Generated concept result:", result);
 
       const updatedElements = [...textElements];
       if (updatedElements[0] && result.topText) {

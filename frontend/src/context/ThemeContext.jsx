@@ -17,7 +17,6 @@ export const ThemeProvider = ({ children }) => {
         const saved = localStorage.getItem("theme");
         return saved ? JSON.parse(saved) : true;
       } catch (error) {
-        console.error('Error reading theme from localStorage:', error);
         return true;
       }
     }
@@ -29,7 +28,6 @@ export const ThemeProvider = ({ children }) => {
       try {
         localStorage.setItem("theme", JSON.stringify(isDarkMode));
       } catch (error) {
-        console.error('Error saving theme to localStorage:', error);
       }
     }
     

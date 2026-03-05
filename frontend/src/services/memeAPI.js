@@ -220,6 +220,68 @@ class MemeApiService {
       throw error;
     }
   }
+
+  // -------------------- BACKEND AI API --------------------
+
+  /**
+   * Generate AI-powered meme using your trained backend model
+   * @param {string} idea - Meme idea/concept (optional if caption provided)
+   * @param {string} caption - Direct caption text (optional if idea provided)
+   * @param {string} templateId - Optional template ID to use (if not provided, backend picks automatically)
+   * @returns {Promise<Object>} Generated meme with caption, sentiment, toxicity score, and meme URL
+   */
+  async generateAIMeme(idea = null, caption = null, templateId = null) {
+    const backendUrl = import.meta.env.VITE_BACKEND_API_URL || 'http://localhost:8000';
+    
+    try {
+      const response = await fetch(`${backendUrl}/generate-meme`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          idea: idea,
+          caption: caption,
+          template_id: templateId
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`Backend API error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      
+      return {
+        success: true,
+        caption: data.caption,
+        sentiment: data.sentiment,
+        toxicityScore: data.toxicity_score,
+        template: data.template,
+        templateTrending: data.template_trending,
+        templateRecentUsage: data.template_recent_usage,
+        memeUrl: data.meme_url
+      };
+    } catch (error) {
+      throw new Error(`Failed to generate AI meme: ${error.message}`);
+    }
+  }
+
+  /**
+   * Check if backend is available
+   * @returns {Promise<boolean>} Backend health status
+   */
+  async checkBackendHealth() {
+    const backendUrl = import.meta.env.VITE_BACKEND_API_URL || 'http://localhost:8000';
+    
+    try {
+      const response = await fetch(`${backendUrl}/`);
+      const data = await response.json();
+      return data.status === 'healthy';
+    } catch (error) {
+      return false;
+    }
+  }
 }
 
 export default new MemeApiService();
