@@ -49,9 +49,9 @@ def check_env_file():
         print("❌ ERROR: .env file not found!")
         print("Create backend/.env with:")
         print("""
-IMGFLIP_USERNAME=agent26
-IMGFLIP_PASSWORD=gQAvPA8Ut&LJd&C
-GEMINI_API_KEY=AIzaSyCXvr-dfM_ZEv5kikI_72LFV06b244ruSE
+IMGFLIP_USERNAME=your_username
+IMGFLIP_PASSWORD=your_password
+GEMINI_API_KEY=your_gemini_api_key
         """)
         return False
     print("✓ .env file found")
