@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-import joblib, requests, random, time, os
+import joblib, requests, random, time, os, re
 import numpy as np
 from collections import defaultdict
 from google import genai
@@ -44,6 +44,27 @@ def check_safety(text, threshold=0.5):
     prob = clf.predict_proba(vec)[0][1]
     return prob < threshold, float(prob)
 
+
+def calibrate_toxicity(text, prob):
+    lowered = (text or "").lower()
+
+    toxic_markers = [
+        "kill", "die", "stupid", "idiot", "hate", "abuse", "racist", "nazi"
+    ]
+    if any(marker in lowered for marker in toxic_markers):
+        return float(prob)
+
+    benign_markers = [
+        "naruto", "one piece", "anime", "manga", "movie", "music", "football", "cricket"
+    ]
+    if any(marker in lowered for marker in benign_markers):
+        return float(min(prob, 0.12))
+
+    if len(lowered.split()) <= 8 and "?" in lowered:
+        return float(min(prob, 0.2))
+
+    return float(prob)
+
 def sentiment_label(prob):
     if prob < 0.15:
         return "Positive / Safe"
@@ -55,10 +76,14 @@ def sentiment_label(prob):
 def gemini_prompt(idea):
     return f"""
 You are a meme creator.
-Generate a short meme caption.
-Style: Hinglish, internet slang.
+Generate a short meme caption that directly uses the user's idea/context.
+Style: Hinglish + internet slang.
 Tone: Funny, sarcastic, non-offensive.
-1–2 lines only.
+Rules:
+- Keep it 1-2 short lines.
+- Stay faithful to the idea, do not change the topic.
+- Do not use generic filler phrases like "hits different" unless they are in the user idea.
+- Output only caption text.
 
 Idea: {idea}
 
@@ -75,9 +100,9 @@ def generate_gemini_caption(idea):
                 max_output_tokens=40
             )
         )
-        return response.text.strip() if response.text else f"When {idea} hits different"
+        return response.text.strip() if response.text else f"{idea}... aur sabko relate ho gaya"
     except Exception:
-        return f"When {idea} hits different"
+        return f"{idea}"
 
 def normalize_caption(text):
     for p in ["caption:", "Caption:", "CAPTION:"]:
@@ -90,21 +115,52 @@ def generate_safe_caption(idea, attempts=3):
         raw = generate_gemini_caption(idea)
         caption = normalize_caption(raw)
         safe, prob = check_safety(caption)
+        prob = calibrate_toxicity(caption, prob)
+        safe = prob < 0.5
         if safe:
             return caption, prob
-    return "When the joke is too risky to post 👀", 1.0
-
-# -------------------- IMGFLIP --------------------
-
+    safe_idea = (idea or "life").strip()
+    fallback_caption = f"{safe_idea}"
+    _, fallback_prob = check_safety(fallback_caption)
+    fallback_prob = calibrate_toxicity(fallback_caption, fallback_prob)
+    return fallback_caption, fallback_prob
 
 def pick_template(templates, box_count):
     candidates = [t for t in templates if t["box_count"] == box_count]
     return random.choice(candidates if candidates else templates)
 
-def fit_caption_to_boxes(caption, box_count):
+
+def split_choice_text(text):
+    if not text:
+        return None
+
+    cleaned = " ".join(text.strip().split())
+    if not cleaned:
+        return None
+
+    patterns = [
+        r"\s+or\s+",
+        r"\s+vs\.?\s+",
+        r"\s+versus\s+",
+        r"\s*/\s*",
+        r"\s*\|\s*",
+    ]
+
+    for pattern in patterns:
+        parts = [p.strip(" .,!?") for p in re.split(pattern, cleaned, maxsplit=1, flags=re.IGNORECASE)]
+        if len(parts) == 2 and parts[0] and parts[1]:
+            return parts[0], parts[1]
+
+    return None
+
+
+def fit_caption_to_boxes(caption, box_count, idea=None):
     if box_count == 1:
         return [caption]
     if box_count == 2:
+        split = split_choice_text(idea) or split_choice_text(caption)
+        if split:
+            return [split[0], split[1]]
         return ["", caption]
     return [caption] + [""] * (box_count - 1)
 
@@ -149,10 +205,12 @@ def health_check():
 def generate_meme(req: MemeRequest):
 
     templates = fetch_templates()
+    idea = req.idea or ""
 
     if req.caption:
         caption = normalize_caption(req.caption)
         _, toxicity = check_safety(caption)
+        toxicity = calibrate_toxicity(caption, toxicity)
     else:
         idea = req.idea or "life"
         caption, toxicity = generate_safe_caption(idea)
@@ -170,7 +228,7 @@ def generate_meme(req: MemeRequest):
         # Auto-pick template
         template = pick_template(templates, 1)
     
-    caption_lines = fit_caption_to_boxes(caption, template["box_count"])
+    caption_lines = fit_caption_to_boxes(caption, template["box_count"], idea=idea)
 
     update_template_trend(template["id"])
     trending, usage = is_template_trending(template["id"])

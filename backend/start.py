@@ -1,14 +1,8 @@
-"""
-Memefy AI Backend - Quick Start Script
-This script starts the backend server with proper error handling
-"""
-
 import subprocess
 import sys
 import os
 
 def check_python():
-    """Check Python version"""
     if sys.version_info < (3, 8):
         print("❌ ERROR: Python 3.8 or higher is required")
         print(f"Current version: {sys.version}")
@@ -17,7 +11,6 @@ def check_python():
     return True
 
 def install_dependencies():
-    """Install required packages"""
     print("\n📦 Installing dependencies...")
     packages = [
         "fastapi",
@@ -43,7 +36,6 @@ def install_dependencies():
         return False
 
 def check_env_file():
-    """Check if .env file exists"""
     env_path = os.path.join(os.path.dirname(__file__), ".env")
     if not os.path.exists(env_path):
         print("❌ ERROR: .env file not found!")
@@ -58,7 +50,6 @@ GEMINI_API_KEY=your_gemini_api_key
     return True
 
 def start_server():
-    """Start the uvicorn server"""
     print("\n" + "="*50)
     print("  🚀 Starting Memefy AI Backend Server")
     print("="*50)
@@ -86,27 +77,22 @@ def start_server():
     return True
 
 def main():
-    """Main entry point"""
     print("="*50)
     print("  Memefy AI - Backend Setup")
     print("="*50)
     
-    # Check Python version
     if not check_python():
         input("Press Enter to exit...")
         sys.exit(1)
     
-    # Check .env file
     if not check_env_file():
         input("Press Enter to exit...")
         sys.exit(1)
     
-    # Install dependencies
     if not install_dependencies():
         input("Press Enter to exit...")
         sys.exit(1)
     
-    # Start server
     start_server()
 
 if __name__ == "__main__":

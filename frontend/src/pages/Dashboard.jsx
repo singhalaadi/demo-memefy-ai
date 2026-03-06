@@ -7,11 +7,11 @@ import { useMemes } from '../hooks/useMemes'
 const Dashboard = () => {
   const { user } = useAuth()
   const { isDarkMode } = useTheme()
-  const { analytics, loading } = useAnalytics(user?.id)
-  const { memes } = useMemes()
+  const { analytics, loading: analyticsLoading } = useAnalytics(user?.id)
+  const { memes, loading: memesLoading } = useMemes(user)
   const isDemoUser = user && localStorage.getItem('demoUser')
   
-  // Calculate actual user memes count and stats
+  const loading = analyticsLoading || memesLoading
   const userMemes = memes.filter(meme => {
     // In demo mode, count all demo memes for this user
     if (isDemoUser) {
@@ -22,6 +22,30 @@ const Dashboard = () => {
   const userMemesCount = userMemes.length
   const totalViews = userMemes.reduce((sum, meme) => sum + (meme.views || 0), 0)
   const totalShares = userMemes.reduce((sum, meme) => sum + (meme.shares || 0), 0)
+  const memesWithToxicity = userMemes.filter(meme => typeof meme.toxicity_score === 'number')
+  const avgToxicityPercent = memesWithToxicity.length > 0
+    ? Math.round((memesWithToxicity.reduce((sum, meme) => sum + meme.toxicity_score, 0) / memesWithToxicity.length) * 1000) / 10
+    : 0
+  const avgTrendyScore = userMemesCount > 0
+    ? Math.round(
+        userMemes.reduce((sum, meme) => {
+          const memeScore = typeof meme.trendy_score === 'number'
+            ? meme.trendy_score
+            : Math.min(100, (meme.views || 0) + (meme.shares || 0) * 5)
+          return sum + memeScore
+        }, 0) / userMemesCount,
+      )
+    : 0
+  const sentimentSummary = userMemes.reduce(
+    (acc, meme) => {
+      const sentiment = (meme.sentiment || '').toLowerCase()
+      if (sentiment.includes('positive') || sentiment.includes('safe')) acc.safe += 1
+      else if (sentiment.includes('neutral')) acc.neutral += 1
+      else if (sentiment.includes('risky') || sentiment.includes('negative')) acc.risky += 1
+      return acc
+    },
+    { safe: 0, neutral: 0, risky: 0 },
+  )
 
   const stats = [
     {
@@ -48,9 +72,23 @@ const Dashboard = () => {
     {
       icon: '🔥',
       title: 'Trending Score',
-      value: Math.min(Math.floor((totalViews + totalShares * 5) / Math.max(userMemesCount, 1)), 100),
+      value: avgTrendyScore,
       color: 'from-orange-500 to-yellow-500',
       description: 'Your viral potential rating'
+    },
+    {
+      icon: '🛡️',
+      title: 'Avg Toxicity',
+      value: `${avgToxicityPercent}%`,
+      color: 'from-indigo-500 to-cyan-500',
+      description: 'Average toxicity across your memes'
+    },
+    {
+      icon: '💬',
+      title: 'Sentiment Mix',
+      value: `${sentimentSummary.safe}/${sentimentSummary.neutral}/${sentimentSummary.risky}`,
+      color: 'from-emerald-500 to-lime-500',
+      description: 'Safe / Neutral / Risky memes'
     }
   ]
 
@@ -58,7 +96,7 @@ const Dashboard = () => {
   const getRecentActivity = () => {
     if (userMemes.length === 0) {
       return [
-        { action: 'Welcome to MEMEFY AI!', meme: 'Start creating memes', time: 'Just now', icon: '�' },
+        { action: 'Welcome to MEMEFY AI !', meme: 'Start creating memes', time: 'Just now', icon: '🚀' },
         { action: 'Explore templates', meme: 'Generator ready', time: 'Now', icon: '🤖' },
       ];
     }
@@ -87,7 +125,10 @@ const Dashboard = () => {
         action: 'Created new meme',
         meme: meme.template_name || 'Custom Meme',
         time: timeAgo,
-        icon: '🎨'
+        icon: '🎨',
+        sentiment: meme.sentiment || null,
+        toxicity: typeof meme.toxicity_score === 'number' ? `${(meme.toxicity_score * 100).toFixed(1)}%` : null,
+        trendy: typeof meme.trendy_score === 'number' ? meme.trendy_score : null,
       };
     });
   };
@@ -142,7 +183,7 @@ const Dashboard = () => {
         </motion.div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
           {stats.map((stat, index) => (
             <motion.div
               key={stat.title}
@@ -240,6 +281,15 @@ const Dashboard = () => {
                         <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                           {activity.meme} • {activity.time}
                         </p>
+                        {(activity.sentiment || activity.toxicity || activity.trendy !== null) && (
+                          <p className={`text-xs mt-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                            {activity.sentiment ? `Sentiment: ${activity.sentiment}` : 'Sentiment: N/A'}
+                            {' • '}
+                            {activity.toxicity ? `Toxicity: ${activity.toxicity}` : 'Toxicity: N/A'}
+                            {' • '}
+                            {activity.trendy !== null ? `Trendy: ${activity.trendy}` : 'Trendy: N/A'}
+                          </p>
+                        )}
                       </div>
                     </motion.div>
                   ))}

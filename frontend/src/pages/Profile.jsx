@@ -22,10 +22,10 @@ const Profile = () => {
     }
   }, [user?.id]);
   
-  // Check if user is in demo mode - MUST be declared before userMemes
+  
   const isDemoUser = user && localStorage.getItem("demoUser");
   
-  // Filter memes for current user, including demo memes
+  
   const userMemes = memes.filter(meme => {
     if (isDemoUser) {
       return meme.user_id === user?.id || meme.id?.startsWith('demo-');
@@ -35,7 +35,7 @@ const Profile = () => {
 
   const handleRefresh = () => {
     if (!isDeleting && user?.id) {
-      refetch(user.id); // Fetch only user's memes
+      refetch(user.id); 
       toast.success("Memes refreshed!");
     }
   };
@@ -62,7 +62,7 @@ const Profile = () => {
         }
       });
 
-      // Check for potential duplicates by template name and creation time
+      
       const duplicates = yourMemes.filter(
         (meme, index, arr) =>
           arr.findIndex(
@@ -145,18 +145,18 @@ const Profile = () => {
     ) {
       setIsDeleting(true);
       try {
-        // Call delete function and wait for completion
+        
         await deleteMeme(meme.id);
 
-        // Also remove from localStorage if it's stored there
+        
         if (meme.isLocalImage) {
           localStorage.removeItem(`meme-image-${meme.image_url}`);
         }
 
-        // Close any open modal
+        
         setSelectedMeme(null);
 
-        // DON'T refetch - let the deleteMeme function handle state updates
+        
 
         toast.success("Meme permanently deleted!");
       } catch (error) {
@@ -168,7 +168,7 @@ const Profile = () => {
     }
   };
 
-  // Helper function to safely format dates
+  
   const formatDate = (dateValue) => {
     if (!dateValue) return "Unknown";
 
@@ -189,6 +189,30 @@ const Profile = () => {
     }
   };
 
+  const getSentimentBadgeClasses = (sentiment) => {
+    const value = (sentiment || "").toLowerCase();
+    if (value.includes("positive") || value.includes("safe")) {
+      return "bg-green-500/20 text-green-400";
+    }
+    if (value.includes("neutral")) {
+      return "bg-yellow-500/20 text-yellow-400";
+    }
+    if (value.includes("risky") || value.includes("negative")) {
+      return "bg-red-500/20 text-red-400";
+    }
+    return "bg-gray-500/20 text-gray-300";
+  };
+
+  const formatToxicity = (toxicityValue) => {
+    if (typeof toxicityValue !== "number") return "N/A";
+    return `${(toxicityValue * 100).toFixed(1)}%`;
+  };
+
+  const getTrendyScore = (meme) => {
+    if (typeof meme?.trendy_score === "number") return meme.trendy_score;
+    return Math.min(100, (meme?.views || 0) + (meme?.shares || 0) * 5);
+  };
+
   return (
     <div
       className={`min-h-screen p-6 transition-all duration-500 ${
@@ -196,7 +220,7 @@ const Profile = () => {
       }`}
     >
       <div className="max-w-6xl mx-auto">
-        {/* Profile Header */}
+        {}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -303,7 +327,7 @@ const Profile = () => {
           </div>
         </motion.div>
 
-        {/* Tab Navigation */}
+        {}
         <div className="flex flex-wrap gap-2 mb-8 justify-center">
           {tabs.map((tab, index) => (
             <motion.button
@@ -330,7 +354,7 @@ const Profile = () => {
           ))}
         </div>
 
-        {/* Tab Content */}
+        {}
         <motion.div
           key={currentTab}
           initial={{ opacity: 0, y: 20 }}
@@ -392,7 +416,7 @@ const Profile = () => {
                           🎭
                         </div>
 
-                        {/* Hover overlay with actions */}
+                        {}
                         <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center gap-2">
                           <motion.button
                             whileHover={{ scale: 1.1 }}
@@ -434,12 +458,26 @@ const Profile = () => {
                       </div>
                       <div className="p-4">
                         <h3 className="font-semibold mb-2 truncate">
-                          {meme.template_name}
+                          {meme.template_name || "Custom Meme"}
                         </h3>
                         <div className="flex justify-between text-sm opacity-70">
                           <span>👁️ {meme.views || 0}</span>
                           <span>📤 {meme.shares || 0}</span>
                         </div>
+                        {(meme.sentiment || typeof meme.toxicity_score === "number") && (
+                          <div className="mt-2 flex flex-wrap gap-2 text-xs">
+                            <span
+                              className={`px-2 py-1 rounded ${getSentimentBadgeClasses(
+                                meme.sentiment,
+                              )}`}
+                            >
+                              {meme.sentiment || "Sentiment: N/A"}
+                            </span>
+                            <span className="px-2 py-1 rounded bg-blue-500/20 text-blue-400">
+                              Toxicity: {formatToxicity(meme.toxicity_score)}
+                            </span>
+                          </div>
+                        )}
                         <div className="mt-2 text-xs text-gray-500">
                           {formatDate(meme.createdAt)}
                         </div>
@@ -510,7 +548,7 @@ const Profile = () => {
                           🎭
                         </div>
 
-                        {/* Hover overlay with actions */}
+                        {}
                         <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center gap-3">
                           <motion.button
                             whileHover={{ scale: 1.1 }}
@@ -529,7 +567,7 @@ const Profile = () => {
                             whileTap={{ scale: 0.9 }}
                             onClick={(e) => {
                               e.stopPropagation();
-                              // Remove from favorites
+                              
                               const savedFavorites =
                                 localStorage.getItem("memeFavorites");
                               const favoriteIds = savedFavorites
@@ -541,7 +579,7 @@ const Profile = () => {
                                 JSON.stringify([...favoriteIds])
                               );
                               toast.success("Removed from favorites 💔");
-                              // Force re-render by updating component state
+                              
                               window.location.reload();
                             }}
                             className="bg-red-500 text-white p-3 rounded-full hover:bg-red-600 transition-colors"
@@ -597,7 +635,7 @@ const Profile = () => {
                 }`}
               >
                 <div className="space-y-6">
-                  {/* Avatar Upload Section */}
+                  {}
                   <div>
                     <label className="block font-semibold mb-3">
                       Profile Picture
@@ -679,7 +717,7 @@ const Profile = () => {
         </motion.div>
       </div>
 
-      {/* Meme Modal */}
+      {}
       <AnimatePresence>
         {selectedMeme && (
           <motion.div
@@ -700,8 +738,12 @@ const Profile = () => {
             >
               <div className="relative">
                 <img
-                  src={selectedMeme.displayImageUrl || selectedMeme.image_url}
-                  alt={selectedMeme.template_name}
+                  src={
+                    selectedMeme.displayImageUrl ||
+                    selectedMeme.image_url ||
+                    selectedMeme.image
+                  }
+                  alt={selectedMeme.template_name || selectedMeme.title || "Meme"}
                   className="w-full h-auto max-h-96 object-contain"
                 />
                 <button
@@ -713,13 +755,32 @@ const Profile = () => {
               </div>
               <div className="p-6">
                 <h3 className="text-2xl font-bold mb-4 gradient-text">
-                  {selectedMeme.template_name}
+                  {selectedMeme.template_name || selectedMeme.title || "Meme"}
                 </h3>
                 <div className="flex items-center gap-6 mb-4 text-sm opacity-70">
                   <span>👁️ {selectedMeme.views || 0} views</span>
                   <span>📤 {selectedMeme.shares || 0} shares</span>
                   <span>📅 {formatDate(selectedMeme.createdAt)}</span>
                 </div>
+                {(selectedMeme.sentiment ||
+                  typeof selectedMeme.toxicity_score === "number" ||
+                  typeof selectedMeme.trendy_score === "number") && (
+                  <div className="flex flex-wrap gap-2 mb-4 text-xs">
+                    <span
+                      className={`px-2 py-1 rounded ${getSentimentBadgeClasses(
+                        selectedMeme.sentiment,
+                      )}`}
+                    >
+                      {selectedMeme.sentiment || "Sentiment: N/A"}
+                    </span>
+                    <span className="px-2 py-1 rounded bg-blue-500/20 text-blue-400">
+                      Toxicity: {formatToxicity(selectedMeme.toxicity_score)}
+                    </span>
+                    <span className="px-2 py-1 rounded bg-orange-500/20 text-orange-400">
+                      Trendy: {getTrendyScore(selectedMeme)}
+                    </span>
+                  </div>
+                )}
                 <div className="flex gap-3">
                   <motion.button
                     whileHover={{ scale: 1.05 }}

@@ -206,19 +206,27 @@ export const useMemes = (currentUser = null) => {
         processedMemeData.isLocalImage = true;
       }
       
-      // Ensure we have a valid user for Firebase
       if (!currentUser?.id && !currentUser?.uid) {
         toast.error('Please sign in to create memes');
         return null;
       }
       
-      // Clean the meme data to prevent Firestore issues
       const cleanMemeData = {
         template_id: processedMemeData.template_id || null,
         template_name: processedMemeData.template_name || '',
         template_image: processedMemeData.template_image || '',
+        template_trending: processedMemeData.template_trending || false,
+        template_usage: processedMemeData.template_usage || 0,
         top_text: processedMemeData.top_text || '',
         bottom_text: processedMemeData.bottom_text || '',
+        caption: processedMemeData.caption || '',
+        sentiment: processedMemeData.sentiment || null,
+        toxicity_score: typeof processedMemeData.toxicity_score === 'number'
+          ? processedMemeData.toxicity_score
+          : null,
+        trendy_score: typeof processedMemeData.trendy_score === 'number'
+          ? processedMemeData.trendy_score
+          : null,
         text_color: processedMemeData.text_color || '#FFFFFF',
         font_size: processedMemeData.font_size || '2rem',
         font_family: processedMemeData.font_family || 'Impact',

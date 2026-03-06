@@ -16,7 +16,7 @@ const Generator = () => {
   const { templates, templatesLoading, createMeme } = useMemes(user);
   const memeRef = useRef(null);
 
-  // State
+  
   const [selectedTemplate, setSelectedTemplate] = useState(null);
   const [textFields, setTextFields] = useState([]);
   const [topText, setTopText] = useState("");
@@ -40,8 +40,6 @@ const Generator = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [showAIEditor, setShowAIEditor] = useState(false);
   const [isGeneratingAI, setIsGeneratingAI] = useState(false);
-  const [aiConcept, setAiConcept] = useState("");
-  const [isGeneratingFromConcept, setIsGeneratingFromConcept] = useState(false);
   const [backendAIConcept, setBackendAIConcept] = useState("");
   const [isGeneratingBackendAI, setIsGeneratingBackendAI] = useState(false);
   const [useOwnTemplateForAI, setUseOwnTemplateForAI] = useState(false);
@@ -81,7 +79,7 @@ const Generator = () => {
     {
       id: "outline",
       name: "Outline",
-      // multiple text-shadow entries to simulate stroke/outline
+      
       style:
         "-1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000",
     },
@@ -106,7 +104,7 @@ const Generator = () => {
       ? templates || []
       : (templates || []).filter((t) => t.category === selectedCategory);
 
-  // Progressive loading - show templates in chunks
+  
   const totalToShow = currentPage * templatesPerPage;
   const filteredTemplates = allFilteredTemplates.slice(0, totalToShow);
 
@@ -120,7 +118,7 @@ const Generator = () => {
   const handleTemplateSelect = (template) => {
     try {
       setSelectedTemplate(template);
-      // Initialize text fields based on box_count
+      
       const boxCount = template?.box_count || 2;
       const initialTextFields = Array.from(
         { length: boxCount },
@@ -134,7 +132,7 @@ const Generator = () => {
       );
       setTextFields(initialTextFields);
 
-      // Keep backward compatibility with existing topText/bottomText
+      
       if (boxCount >= 1) setTopText("");
       if (boxCount >= 2) setBottomText("");
     } catch (error) {
@@ -151,7 +149,7 @@ const Generator = () => {
     if (id === 1) setBottomText(text);
   };
 
-  // Load more templates
+  
   const handleLoadMore = () => {
     setCurrentPage((prev) => prev + 1);
 
@@ -169,50 +167,13 @@ const Generator = () => {
     }, 100);
   };
 
-  // Reset pagination when changing categories
+  
   const handleCategoryChange = (category) => {
     setSelectedCategory(category);
-    setCurrentPage(1); // Reset to first page
+    setCurrentPage(1); 
   };
 
-  // Generate from AI concept
-  const generateFromConcept = async () => {
-    if (!selectedTemplate) {
-      toast.error("Please select a template first! 😅");
-      return;
-    }
-    if (!aiConcept.trim()) {
-      toast.error("Please describe your meme concept! 💭");
-      return;
-    }
-
-    setIsGeneratingFromConcept(true);
-    try {
-      toast("Creating your meme with smart patterns... 🧠", { icon: "✨" });
-
-      const result = await firebaseAIService.generateCompleteMeme(
-        selectedTemplate.name,
-        aiConcept,
-      );
-
-      if (result && result.topText) setTopText(result.topText);
-      if (result && result.bottomText) setBottomText(result.bottomText);
-
-      toast.success("Smart meme generated! 🎨✨");
-
-      if (result && (result.topText || result.bottomText)) {
-        setTimeout(() => {
-          handleGenerateMeme();
-        }, 1000);
-      }
-    } catch (error) {
-      toast.error("AI failed, but you can still create manually! 😅");
-    } finally {
-      setIsGeneratingFromConcept(false);
-    }
-  };
-
-  // Test Firebase AI connection
+  
   const testFirebaseAI = async () => {
     setIsGeneratingAI(true);
     try {
@@ -225,7 +186,7 @@ const Generator = () => {
     }
   };
 
-  // -------------------- BACKEND AI INTEGRATION --------------------
+  
 
   /**
    * Generate meme using your trained backend AI model
@@ -237,7 +198,7 @@ const Generator = () => {
       return;
     }
 
-    // Check if user wants to use their own template but hasn't selected one
+    
     if (useOwnTemplateForAI && !selectedTemplate) {
       toast.error(
         "Please select a template first, or uncheck 'Use My Selected Template'! 🎨",
@@ -248,17 +209,17 @@ const Generator = () => {
     setIsGeneratingBackendAI(true);
 
     try {
-      // Check backend health first
+      
       const isBackendHealthy = await memeAPI.checkBackendHealth();
       if (!isBackendHealthy) {
         toast.error("Backend server is not running! Please start it first. 🚨");
         return;
       }
 
-      toast.loading("🤖 Your AI model is analyzing...", { id: "backend-ai" });
+      toast.loading("🤖 AI model is analyzing...", { id: "backend-ai" });
 
-      // Call your trained backend AI model
-      // If user selected a template, pass its ID; otherwise let backend choose
+      
+      
       const templateId =
         useOwnTemplateForAI && selectedTemplate ? selectedTemplate.id : null;
       const result = await memeAPI.generateAIMeme(
@@ -273,12 +234,18 @@ const Generator = () => {
           { id: "backend-ai", duration: 4000 },
         );
 
-        // Create meme object with backend response
+        
         const memeData = {
           id: uuidv4(),
           caption: result.caption,
           sentiment: result.sentiment,
           toxicity_score: result.toxicityScore,
+          trendy_score: result.templateTrending
+            ? Math.min(100, 70 + result.templateRecentUsage * 3)
+            : Math.min(100, 35 + result.templateRecentUsage * 2),
+          template_id: templateId,
+          template_name: result.template,
+          template_image: selectedTemplate?.image || "",
           template: result.template,
           template_trending: result.templateTrending,
           template_usage: result.templateRecentUsage,
@@ -291,9 +258,9 @@ const Generator = () => {
 
         setGeneratedMeme(memeData);
         setShowPreview(true);
-        setBackendAIConcept(""); // Clear input
+        setBackendAIConcept(""); 
 
-        // Show trending notification if applicable
+        
         if (result.templateTrending) {
           setTimeout(() => {
             toast("🔥 This template is trending!", { icon: "📈" });
@@ -302,7 +269,7 @@ const Generator = () => {
       }
     } catch (error) {
       toast.error(
-        `Backend AI failed: ${error.message}. Make sure your backend is running!`,
+        `Backend AI failed: ${error.message}. Make sure backend is running!`,
         { id: "backend-ai", duration: 5000 },
       );
     } finally {
@@ -310,7 +277,7 @@ const Generator = () => {
     }
   };
 
-  // AI-powered functions
+  
   const generateAISuggestion = async () => {
     if (!selectedTemplate) {
       toast.error("Select a template first");
@@ -329,7 +296,7 @@ const Generator = () => {
         selectedTemplate.name,
       );
 
-      // Apply first suggestion
+      
       if (suggestions && suggestions.suggestion1) {
         updateTextField(0, suggestions.suggestion1.top || "");
         updateTextField(1, suggestions.suggestion1.bottom || "");
@@ -392,7 +359,7 @@ const Generator = () => {
     setIsGenerating(true);
 
     try {
-      // Simulate AI processing with fun messages
+      
       const messages = [
         "Consulting the meme gods... 🙏",
         "Adding extra spice... 🌶️",
@@ -402,8 +369,8 @@ const Generator = () => {
 
       for (let i = 0; i < messages.length; i++) {
         toast(messages[i], { icon: "🤖" });
-        // small delay to simulate generation
-        // eslint-disable-next-line no-await-in-loop
+        
+        
         await new Promise((resolve) => setTimeout(resolve, 500));
       }
 
@@ -444,7 +411,7 @@ const Generator = () => {
     if (!generatedMeme) return;
 
     try {
-      // For backend AI generated memes, download directly from URL
+      
       if (generatedMeme.image_url) {
         const response = await fetch(generatedMeme.image_url);
         const blob = await response.blob();
@@ -460,7 +427,7 @@ const Generator = () => {
         return;
       }
 
-      // For manually created memes, use html2canvas
+      
       if (!memeRef.current) return;
 
       const canvas = await html2canvas(memeRef.current, {
@@ -499,7 +466,7 @@ const Generator = () => {
     }
   };
 
-  // Robust text style generator: receives a position {x,y} and returns style object
+  
   const getTextStyle = (position = { x: 50, y: 50 }, options = {}) => {
     const effect = textEffects.find(
       (e) => e.id === (options.textEffect || textEffect),
@@ -524,11 +491,11 @@ const Generator = () => {
       aiSuggestions[Math.floor(Math.random() * aiSuggestions.length)];
 
     if (textFields.length > 0) {
-      // Randomly select one of the text fields
+      
       const randomFieldId = Math.floor(Math.random() * textFields.length);
       updateTextField(randomFieldId, suggestion);
     } else {
-      // Fallback to old behavior
+      
       if (Math.random() > 0.5) {
         setTopText(suggestion);
       } else {
@@ -544,7 +511,7 @@ const Generator = () => {
         isDarkMode ? "text-white" : "text-gray-900"
       }`}
     >
-      {/* Enhanced Background Effects */}
+      {}
       <div className="fixed inset-0 overflow-hidden pointer-events-none transition-opacity duration-700">
         <div
           className={`absolute -top-40 -right-40 w-80 h-80 rounded-full blur-3xl animate-pulse transition-all duration-700 ${
@@ -569,7 +536,7 @@ const Generator = () => {
         />
       </div>
 
-      {/* Header */}
+      {}
       <motion.div
         className="text-center mb-6 md:mb-8 relative z-10"
         initial={{ opacity: 0, y: -20 }}
@@ -595,7 +562,7 @@ const Generator = () => {
       </motion.div>
 
       <div className="max-w-7xl mx-auto relative z-10">
-        {/* Tab Navigation */}
+        {}
         <div className="flex flex-wrap gap-2 mb-4 justify-center px-2">
           {["templates", "customize", "effects"].map((tab) => (
             <motion.button
@@ -621,7 +588,7 @@ const Generator = () => {
           ))}
         </div>
 
-        {/* Templates Tab */}
+        {}
         <AnimatePresence mode="wait">
           {activeTab === "templates" && (
             <motion.div
@@ -631,7 +598,7 @@ const Generator = () => {
               exit={{ opacity: 0, x: 20 }}
               transition={{ duration: 0.3 }}
             >
-              {/* Category Filter */}
+              {}
               <div className="flex flex-wrap gap-3 mb-8 justify-center px-2">
                 {categories.map((category) => {
                   const categoryCount =
@@ -665,7 +632,7 @@ const Generator = () => {
                 })}
               </div>
 
-              {/* Template Grid */}
+              {}
               {templatesLoading ? (
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-4 mb-6">
                   {Array.from({ length: 8 }).map((_, index) => (
@@ -744,10 +711,10 @@ const Generator = () => {
                 </div>
               )}
 
-              {/* Template Count and Load More Section */}
+              {}
               {!templatesLoading && totalTemplatesCount > 0 && (
                 <div className="text-center mt-6 space-y-4">
-                  {/* Progress Bar */}
+                  {}
                   <div className="max-w-md mx-auto">
                     <div
                       className={`w-full rounded-full h-2 ${
@@ -767,7 +734,7 @@ const Generator = () => {
                     </div>
                   </div>
 
-                  {/* Count Display */}
+                  {}
                   <div
                     className={`text-sm font-medium ${
                       isDarkMode ? "text-gray-300" : "text-gray-600"
@@ -789,7 +756,7 @@ const Generator = () => {
                     )}
                   </div>
 
-                  {/* Load More Button */}
+                  {}
                   {canLoadMore && (
                     <motion.button
                       whileHover={{ scale: 1.05 }}
@@ -810,7 +777,7 @@ const Generator = () => {
                     </motion.button>
                   )}
 
-                  {/* All Loaded Message */}
+                  {}
                   {!canLoadMore && totalTemplatesCount > templatesPerPage && (
                     <motion.div
                       initial={{ opacity: 0, y: 10 }}
@@ -841,7 +808,7 @@ const Generator = () => {
             </motion.div>
           )}
 
-          {/* Customize Tab */}
+          {}
           {activeTab === "customize" && (
             <motion.div
               key="customize"
@@ -873,9 +840,9 @@ const Generator = () => {
                   </motion.button>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-                  {/* Text Controls Section */}
-                  <div className="space-y-4 order-2 md:order-1">
+                <div className="grid grid-cols-1 lg:grid-cols-[minmax(320px,460px)_minmax(420px,1fr)] gap-4 md:gap-6 items-start">
+                  {}
+                  <div className="space-y-4">
                     <div
                       className={`glass p-2 lg:p-3 rounded-lg transition-all duration-300 ${
                         isDarkMode
@@ -921,7 +888,7 @@ const Generator = () => {
                           </div>
                         )}
 
-                        {/* AI Features */}
+                        {}
                         <motion.button
                           whileHover={{ scale: 1.02 }}
                           whileTap={{ scale: 0.98 }}
@@ -982,141 +949,7 @@ const Generator = () => {
                       </div>
                     </div>
 
-                    {/* AI Concept Generator */}
-                    <div
-                      className={`glass p-3 rounded-lg transition-all duration-300 mb-3 ${
-                        isDarkMode
-                          ? ""
-                          : "bg-white/90 shadow-lg border border-gray-100"
-                      }`}
-                    >
-                      <h3 className="text-base font-bold mb-2 gradient-text transition-all duration-300">
-                        🤖 AI Meme Generator
-                      </h3>
-                      <div className="space-y-2">
-                        <div>
-                          <label className="block text-xs font-semibold mb-1">
-                            Describe your meme concept
-                          </label>
-                          <textarea
-                            value={aiConcept}
-                            onChange={(e) => setAiConcept(e.target.value)}
-                            placeholder="e.g., When you're trying to explain a complex problem to your friend..."
-                            className={`w-full p-2 rounded-md border-2 transition-all duration-300 h-16 resize-none text-sm ${
-                              isDarkMode
-                                ? "bg-gray-800 border-gray-600 text-white"
-                                : "bg-white border-gray-300 text-gray-900"
-                            }`}
-                          />
-                        </div>
-                        <div className="flex flex-col sm:grid sm:grid-cols-2 gap-2">
-                          <motion.button
-                            whileHover={{ scale: 1.02 }}
-                            whileTap={{ scale: 0.98 }}
-                            onClick={async () => {
-                              if (!aiConcept.trim()) {
-                                toast.error(
-                                  "Please describe your concept first! 💭",
-                                );
-                                return;
-                              }
-                              try {
-                                const suggestion =
-                                  await firebaseAIService.generateMemeTemplate(
-                                    aiConcept,
-                                  );
-                                toast.success(
-                                  `AI suggests: ${
-                                    suggestion?.template || "unknown"
-                                  }! ${suggestion?.reason || ""}`,
-                                  {
-                                    duration: 5000,
-                                  },
-                                );
-                              } catch (error) {
-                                toast.error(
-                                  "Failed to get template suggestion 😅",
-                                );
-                              }
-                            }}
-                            className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white py-3 px-4 rounded-xl font-semibold flex items-center justify-center gap-2 text-sm"
-                          >
-                            🎯 Get Template Suggestion
-                          </motion.button>
-
-                          <motion.button
-                            whileHover={{ scale: 1.02 }}
-                            whileTap={{ scale: 0.98 }}
-                            onClick={generateFromConcept}
-                            disabled={
-                              isGeneratingFromConcept || !selectedTemplate
-                            }
-                            className="bg-gradient-to-r from-purple-500 to-pink-500 text-white py-3 px-4 rounded-xl font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm"
-                          >
-                            {isGeneratingFromConcept ? (
-                              <>
-                                <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" />
-                                Creating...
-                              </>
-                            ) : (
-                              <>✨ Generate with AI</>
-                            )}
-                          </motion.button>
-                        </div>
-
-                        {/* AI Image Generation */}
-                        <div className="mt-4 pt-4 border-t border-gray-600">
-                          <motion.button
-                            whileHover={{ scale: 1.02 }}
-                            whileTap={{ scale: 0.98 }}
-                            onClick={async () => {
-                              if (!aiConcept.trim()) {
-                                toast.error(
-                                  "Please describe your meme concept first! 💭",
-                                );
-                                return;
-                              }
-
-                              try {
-                                toast("Testing AI image generation... 🎨", {
-                                  icon: "⚡",
-                                });
-                                const testResult =
-                                  await firebaseAIService.testImageGeneration();
-
-                                if (testResult?.success) {
-                                  toast.success(
-                                    "AI Image generation is available! 🖼️✨",
-                                  );
-                                  toast(
-                                    "Feature coming soon - generating custom meme images! 🚀",
-                                    {
-                                      duration: 4000,
-                                      icon: "🎭",
-                                    },
-                                  );
-                                } else {
-                                  toast.error(
-                                    `Image generation unavailable: ${
-                                      testResult?.error || "Unknown"
-                                    }`,
-                                  );
-                                }
-                              } catch (error) {
-                                toast.error(
-                                  "Image generation test failed 🖼️❌",
-                                );
-                              }
-                            }}
-                            className="w-full bg-gradient-to-r from-green-500 to-emerald-500 text-white py-3 px-4 rounded-xl font-semibold flex items-center justify-center gap-2"
-                          >
-                            🎨 Test AI Image (Coming Soon)
-                          </motion.button>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Backend AI Generator - YOUR TRAINED MODEL! */}
+                    {}
                     <div
                       className={`glass p-3 rounded-lg transition-all duration-300 mb-3 border-2 ${
                         isDarkMode
@@ -1128,16 +961,16 @@ const Generator = () => {
                         <div className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-2 py-0.5 rounded-full text-xs font-bold">
                           NEW
                         </div>
-                        <h3 className="text-base font-bold gradient-text transition-all duration-300">
-                          🚀 Your Trained AI Model
+                        <span>🚀</span><h3 className="text-base font-bold gradient-text transition-all duration-300">
+                           Trained AI Model
                         </h3>
                       </div>
                       <p className="text-xs text-gray-400 mb-3">
-                        ✨ Uses your custom-trained sentiment analysis + Gemini
+                        ✨ Uses custom-trained sentiment analysis + Gemini
                         AI
                       </p>
 
-                      {/* Template Selection Toggle */}
+                      {}
                       <div
                         className={`mb-3 p-2 rounded-lg border ${
                           isDarkMode
@@ -1219,7 +1052,7 @@ const Generator = () => {
                           ) : (
                             <>
                               <span>🎯</span>
-                              <span>Generate with Your AI Model</span>
+                              <span>Generate with AI Model</span>
                             </>
                           )}
                         </motion.button>
@@ -1244,7 +1077,7 @@ const Generator = () => {
                       </div>
                     </div>
 
-                    {/* Text Styling */}
+                    {}
                     <div
                       className={`glass p-3 lg:p-6 rounded-2xl transition-all duration-500 ${
                         isDarkMode
@@ -1252,11 +1085,12 @@ const Generator = () => {
                           : "bg-white/90 shadow-lg border border-gray-100"
                       }`}
                     >
-                      <h3 className="text-base lg:text-xl font-bold mb-4 gradient-text transition-all duration-300">
-                        🎨 Advanced Styling
+                      <h3 className="text-base lg:text-xl font-bold mb-4 transition-all duration-300">
+                        <span className="emoji-plain">🎨</span>{" "}
+                        <span className="gradient-text">Advanced Styling</span>
                       </h3>
 
-                      {/* Text Element Selector */}
+                      {}
                       <div className="mb-4">
                         <label className="block text-sm font-semibold mb-3">
                           Customize Text
@@ -1286,7 +1120,7 @@ const Generator = () => {
                       </div>
 
                       <div className="space-y-5">
-                        {/* Font Family */}
+                        {}
                         <div>
                           <label className="block text-sm font-semibold mb-2">
                             Font Family
@@ -1355,7 +1189,7 @@ const Generator = () => {
                         </div>
                       </div>
 
-                      {/* Text Alignment */}
+                      {}
                       <div className="mt-4">
                         <label className="block text-sm font-semibold mb-2">
                           Text Alignment
@@ -1375,7 +1209,7 @@ const Generator = () => {
                         </select>
                       </div>
 
-                      {/* Text Position */}
+                      {}
                       <div className="bg-gray-800/30 p-4 rounded-xl mt-4">
                         <label className="block text-sm font-semibold mb-4">
                           {selectedTextElement === "top"
@@ -1463,7 +1297,7 @@ const Generator = () => {
                         </div>
                       </div>
 
-                      {/* Text Effects */}
+                      {}
                       <div className="mt-4">
                         <label className="block text-sm font-semibold mb-2">
                           Text Effect
@@ -1487,9 +1321,9 @@ const Generator = () => {
                     </div>
                   </div>
 
-                  {/* Live Preview */}
+                  {}
                   <div
-                    className={`glass p-2 md:p-3 rounded-lg transition-all duration-300 order-1 md:order-2 ${
+                    className={`glass p-2 md:p-3 rounded-lg transition-all duration-300 lg:sticky lg:top-24 h-fit ${
                       isDarkMode
                         ? ""
                         : "bg-white/90 shadow-lg border border-gray-100"
@@ -1505,7 +1339,7 @@ const Generator = () => {
                           : "bg-gray-50 shadow-inner"
                       }`}
                     >
-                      {/* Image container with natural aspect ratio */}
+                      {}
                       <div className="relative">
                         <img
                           src={selectedTemplate?.image}
@@ -1514,9 +1348,9 @@ const Generator = () => {
                         />
                       </div>
 
-                      {/* Text overlay container */}
+                      {}
                       <div className="absolute inset-0 top-0 left-0 w-full h-full">
-                        {/* Render text fields on top of the image; compute positions */}
+                        {}
                         {textFields.map((field, index) => {
                           if (!field?.text) return null;
 
@@ -1530,7 +1364,7 @@ const Generator = () => {
                           if (isTop) pos = textPosition;
                           else if (isBottom) pos = bottomTextPosition;
                           else if (isMiddle) {
-                            // Space middle texts between top (10%) and bottom (90%)
+                            
                             const middleBase = 20;
                             const step = Math.min(
                               60 / Math.max(1, textFields.length),
@@ -1556,7 +1390,7 @@ const Generator = () => {
                           );
                         })}
 
-                        {/* Enhanced text rendering with custom positioning */}
+                        {}
                         {textFields.length === 0 && topText && (
                           <div
                             className="meme-text-overlay px-2"
@@ -1593,7 +1427,7 @@ const Generator = () => {
             </motion.div>
           )}
 
-          {/* Effects Tab */}
+          {}
           {activeTab === "effects" && (
             <motion.div
               key="effects"
@@ -1640,7 +1474,7 @@ const Generator = () => {
           )}
         </AnimatePresence>
 
-        {/* Generate Button */}
+        {}
         {selectedTemplate &&
           (topText ||
             bottomText ||
@@ -1676,7 +1510,7 @@ const Generator = () => {
           )}
       </div>
 
-      {/* Preview Modal */}
+      {}
       <AnimatePresence>
         {showPreview && generatedMeme && (
           <motion.div
@@ -1710,8 +1544,9 @@ const Generator = () => {
               onClick={(e) => e.stopPropagation()}
             >
               <div className="text-center mb-4">
-                <h3 className="text-2xl font-bold gradient-text">
-                  Your Meme is Fire! 🔥
+                <h3 className="text-2xl font-bold">
+                  <span className="gradient-text">Your Meme is Fire!</span>{" "}
+                  <span className="emoji-plain">🔥</span>
                 </h3>
                 <p
                   className={`${
@@ -1726,7 +1561,7 @@ const Generator = () => {
                 ref={memeRef}
                 className="relative bg-white rounded-xl overflow-hidden mb-6 max-w-lg mx-auto"
               >
-                {/* Backend AI generated meme - show final image directly */}
+                {}
                 {generatedMeme.image_url ? (
                   <div className="w-full">
                     <img
@@ -1735,7 +1570,7 @@ const Generator = () => {
                       className="w-full h-auto"
                       crossOrigin="anonymous"
                     />
-                    {/* Show caption and metadata below */}
+                    {}
                     <div
                       className={`p-3 ${isDarkMode ? "bg-gray-800" : "bg-gray-100"}`}
                     >
@@ -1777,7 +1612,7 @@ const Generator = () => {
                       className="w-full h-auto"
                     />
 
-                    {/* Text overlay container - for manual generation */}
+                    {}
                     <div className="absolute inset-0">
                       {generatedMeme.text_fields?.map((field, index) => {
                         if (!field?.text) return null;
@@ -1818,7 +1653,7 @@ const Generator = () => {
                         );
                       })}
 
-                      {/* Fallback for backward compatibility */}
+                      {}
                       {(!generatedMeme.text_fields ||
                         generatedMeme.text_fields.length === 0) &&
                         generatedMeme.top_text && (
@@ -1909,7 +1744,7 @@ const Generator = () => {
         )}
       </AnimatePresence>
 
-      {/* Floating Quick Actions */}
+      {}
       {selectedTemplate && (
         <div className="fixed bottom-4 right-4 md:bottom-6 md:right-6 flex flex-col gap-2 md:gap-3 z-40">
           <motion.button
@@ -1939,7 +1774,7 @@ const Generator = () => {
         </div>
       )}
 
-      {/* AI Meme Editor Modal */}
+      {}
       <AnimatePresence>
         {showAIEditor && (
           <AIMemeEditor
